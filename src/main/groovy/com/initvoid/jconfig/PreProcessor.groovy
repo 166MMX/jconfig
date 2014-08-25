@@ -8,44 +8,46 @@ import java.util.regex.Pattern
 @CompileStatic
 class PreProcessor
 {
-    static Pattern  HELP_PATTERN    = ~/(?i)\s*(---)?\s*help\s*(---)?\s*/
+    static Pattern  HELP_PATTERN    = ~/(?i)\s*(---)?\s*\bhelp\b\s*(---)?\s*/
     static String   HELP_DELIMITER  = '\u001F'
     static int      INIT_LENGTH     = -1
 
     static void process(Reader reader, Writer writer)
     {
-        boolean  firstLineInStream  = true
+        boolean  firstLineInStream           = true
 
-        boolean  contextHelpActive  = false
-        boolean  endHelp            = false
-        boolean  endHelpWritten     = false
-        boolean  startHelp          = false
-        boolean  startHelpWritten   = false
-        int      firstIndent        = INIT_LENGTH
-        int      currentIndent      = INIT_LENGTH
+        boolean  helpContextActive           = false
+        boolean  endHelpBeforeCurrentLine    = false
+        boolean  endHelpAfterCurrentLine     = false
+        boolean  endHelpWritten              = false
+        boolean  startHelpBeforeCurrentLine  = false
+        boolean  startHelpWritten            = false
+        int      firstIndent                 = INIT_LENGTH
+        int      currentIndent               = INIT_LENGTH
 
-        String   currentLine        = reader.readLine()
+        String   currentLine                 = reader.readLine()
         String   nextLine
 
         while (currentLine != null)
         {
             nextLine = reader.readLine()
 
-            if (contextHelpActive && endHelpWritten)
+            if (helpContextActive && endHelpWritten)
             {
-                contextHelpActive  = false
-                endHelp            = false
-                endHelpWritten     = false
-                startHelp          = false
-                startHelpWritten   = false
-                firstIndent        = INIT_LENGTH
-                currentIndent      = INIT_LENGTH
+                helpContextActive           = false
+                endHelpBeforeCurrentLine    = false
+                endHelpAfterCurrentLine     = false
+                endHelpWritten              = false
+                startHelpBeforeCurrentLine  = false
+                startHelpWritten            = false
+                firstIndent                 = INIT_LENGTH
+                currentIndent               = INIT_LENGTH
             }
-            if (contextHelpActive)
+            if (helpContextActive)
             {
                 if (!startHelpWritten)
                 {
-                    startHelp = true
+                    startHelpBeforeCurrentLine = true
                 }
 
                 if (currentLine.find(~/[ \t]+/) != null)
@@ -53,12 +55,12 @@ class PreProcessor
                     currentIndent = indentLength(currentLine)
                     if (firstIndent != INIT_LENGTH && currentIndent < firstIndent)
                     {
-                        endHelp = true
+                        endHelpBeforeCurrentLine = true
                     }
                 }
                 if (currentLine.find(~/[ \t]*$/) != null && nextLine?.find(~/^[^ \t]/) != null)
                 {
-                    endHelp = true
+                    endHelpAfterCurrentLine = true
                 }
                 else if (currentLine.find(~/[ \t]*$/) != null)
                 {
@@ -71,11 +73,11 @@ class PreProcessor
             }
             else if (currentLine.find(HELP_PATTERN) != null)
             {
-                contextHelpActive  = true
+                helpContextActive  = true
                 currentLine        = currentLine.tr('-', ' ')
             }
 
-            if (endHelp && !endHelpWritten && startHelpWritten)
+            if (endHelpBeforeCurrentLine && !endHelpWritten && startHelpWritten)
             {
                 writer.write(HELP_DELIMITER)
                 endHelpWritten = true
@@ -91,7 +93,7 @@ class PreProcessor
                 writer.write('\n')
             }
 
-            if (startHelp && !startHelpWritten)
+            if (startHelpBeforeCurrentLine && !startHelpWritten)
             {
                 writer.write(HELP_DELIMITER)
                 startHelpWritten = true
@@ -99,12 +101,19 @@ class PreProcessor
 
             writer.write(currentLine)
 
+            if (endHelpAfterCurrentLine && !endHelpWritten)
+            {
+                writer.write(HELP_DELIMITER)
+                endHelpWritten = true
+            }
+
             currentLine = nextLine
         }
 
-        if (contextHelpActive && !endHelpWritten)
+        if (helpContextActive && !endHelpWritten)
         {
             writer.write(HELP_DELIMITER)
+            endHelpWritten = true
         }
 
         // end last line
@@ -156,11 +165,11 @@ class PreProcessor
 
         static void process(Reader reader, Writer writer)
         {
-            def worker = new ThreadWorker()
-            worker.reader = reader
-            worker.writer = writer
-            def thread = new Thread(worker)
-            thread.daemon = true
+            def worker     = new ThreadWorker()
+            worker.reader  = reader
+            worker.writer  = writer
+            def thread     = new Thread(worker)
+            thread.daemon  = true
             thread.start()
         }
     }
