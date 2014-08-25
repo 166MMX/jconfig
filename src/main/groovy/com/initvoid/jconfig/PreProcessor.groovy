@@ -1,77 +1,84 @@
 package com.initvoid.jconfig
 
 import groovy.transform.CompileStatic
+import org.apache.commons.io.HexDump
 
 import java.util.regex.Pattern
 
 @CompileStatic
 class PreProcessor
 {
-    static Pattern  HELP_PATTERN    = ~/(?i)^\s*(---)?\s*help\s*(---)?\s*$/
+    static Pattern  HELP_PATTERN    = ~/(?i)\s*(---)?\s*help\s*(---)?\s*/
     static String   HELP_DELIMITER  = '\u001F'
     static int      INIT_LENGTH     = -1
 
-    static void process(InputStream inputStream, OutputStream outputStream)
+    static void process(Reader reader, Writer writer)
     {
-        OutputStreamWriter  outputStreamWriter  = new OutputStreamWriter(outputStream)
-        InputStreamReader   inputStreamReader   = new InputStreamReader(inputStream)
-        BufferedReader      bufferedReader      = new BufferedReader(inputStreamReader)
+        boolean  firstLineInStream  = true
 
-        boolean  firstLineInStream    = true
+        boolean  contextHelpActive  = false
+        boolean  endHelp            = false
+        boolean  endHelpWritten     = false
+        boolean  startHelp          = false
+        boolean  startHelpWritten   = false
+        int      firstIndent        = INIT_LENGTH
+        int      currentIndent      = INIT_LENGTH
 
-        boolean  contextHelpActive    = false
-        boolean  writeEndMarker       = false
-        boolean  endMarkerWritten     = false
-        boolean  writeStartMarker     = false
-        boolean  startMarkerWritten   = false
-        int      firstHelpLineIndent  = INIT_LENGTH
+        String   currentLine        = reader.readLine()
+        String   nextLine
 
-        String   line
-
-        while ((line = bufferedReader.readLine()) != null)
+        while (currentLine != null)
         {
-            if (contextHelpActive && endMarkerWritten)
+            nextLine = reader.readLine()
+
+            if (contextHelpActive && endHelpWritten)
             {
-                contextHelpActive    = false
-                writeEndMarker       = false
-                endMarkerWritten     = false
-                writeStartMarker     = false
-                startMarkerWritten   = false
-                firstHelpLineIndent  = INIT_LENGTH
+                contextHelpActive  = false
+                endHelp            = false
+                endHelpWritten     = false
+                startHelp          = false
+                startHelpWritten   = false
+                firstIndent        = INIT_LENGTH
+                currentIndent      = INIT_LENGTH
             }
             if (contextHelpActive)
             {
-                if (!startMarkerWritten)
+                if (!startHelpWritten)
                 {
-                    writeStartMarker = true
+                    startHelp = true
                 }
 
-                boolean emptyLine = line.length() == 0
-                int currentHelpLineIndent = indentLength(line)
-
-                if (emptyLine)
+                if (currentLine.find(~/[ \t]+/) != null)
+                {
+                    currentIndent = indentLength(currentLine)
+                    if (firstIndent != INIT_LENGTH && currentIndent < firstIndent)
+                    {
+                        endHelp = true
+                    }
+                }
+                if (currentLine.find(~/[ \t]*$/) != null && nextLine?.find(~/^[^ \t]/) != null)
+                {
+                    endHelp = true
+                }
+                else if (currentLine.find(~/[ \t]*$/) != null)
                 {
                     'nop'
                 }
-                else if (firstHelpLineIndent == INIT_LENGTH)
+                else if (currentLine.find(~/[^ \t].*/) != null && firstIndent == INIT_LENGTH)
                 {
-                    firstHelpLineIndent = currentHelpLineIndent
-                }
-                else if (currentHelpLineIndent < firstHelpLineIndent)
-                {
-                    writeEndMarker = true
+                    firstIndent = currentIndent
                 }
             }
-            else if (line.matches(HELP_PATTERN))
+            else if (currentLine.find(HELP_PATTERN) != null)
             {
                 contextHelpActive  = true
-                line               = line.tr('-', ' ')
+                currentLine        = currentLine.tr('-', ' ')
             }
 
-            if (writeEndMarker && !endMarkerWritten)
+            if (endHelp && !endHelpWritten && startHelpWritten)
             {
-                outputStreamWriter.write(HELP_DELIMITER)
-                endMarkerWritten = true
+                writer.write(HELP_DELIMITER)
+                endHelpWritten = true
             }
 
             if (firstLineInStream)
@@ -81,27 +88,29 @@ class PreProcessor
             else
             {
                 // end previous line
-                outputStreamWriter.write('\n')
+                writer.write('\n')
             }
 
-            if (writeStartMarker && !startMarkerWritten)
+            if (startHelp && !startHelpWritten)
             {
-                outputStreamWriter.write(HELP_DELIMITER)
-                startMarkerWritten = true
+                writer.write(HELP_DELIMITER)
+                startHelpWritten = true
             }
 
-            outputStreamWriter.write(line)
+            writer.write(currentLine)
+
+            currentLine = nextLine
         }
 
-        if (contextHelpActive && !endMarkerWritten)
+        if (contextHelpActive && !endHelpWritten)
         {
-            outputStreamWriter.write(HELP_DELIMITER)
+            writer.write(HELP_DELIMITER)
         }
 
         // end last line
-        outputStreamWriter.write('\n')
+        writer.write('\n')
 
-        outputStreamWriter.flush()
+        writer.flush()
     }
 
     static int indentLength (String line)
@@ -123,16 +132,36 @@ class PreProcessor
     static void main (String[] args)
     {
         def url = 'https://raw.githubusercontent.com/torvalds/linux/master/sound/Kconfig'.toURL()
-        def bufferedInputStream    = url.newInputStream()
-        def byteArrayOutputStream  = new ByteArrayOutputStream()
+        def reader = url.newReader()
+        def writer = new StringWriter()
 
-        process(bufferedInputStream, byteArrayOutputStream)
+        process(reader, writer)
 
-        def result = byteArrayOutputStream.toString()
-
-        println result
+        //HexDump.dump(byteArrayOutputStream.toByteArray(), 0, System.out, 0)
 
         'nop'
     }
 
+    static class ThreadWorker implements Runnable
+    {
+        Reader reader
+        Writer writer
+
+        @Override
+        void run()
+        {
+            PreProcessor.process(reader, writer)
+            writer.close()
+        }
+
+        static void process(Reader reader, Writer writer)
+        {
+            def worker = new ThreadWorker()
+            worker.reader = reader
+            worker.writer = writer
+            def thread = new Thread(worker)
+            thread.daemon = true
+            thread.start()
+        }
+    }
 }

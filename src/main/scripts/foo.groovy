@@ -1,13 +1,13 @@
 import com.initvoid.jconfig.PreProcessor
 
 def url = 'https://raw.githubusercontent.com/torvalds/linux/master/arch/x86/Kconfig'.toURL()
-BufferedInputStream bufferedUrlInputStream = url.newInputStream()
-//def file = new File('C:\\Users\\MMX\\IdeaProjects\\378b037ec0913cad7218\\src\\main\\script\\res\\arch_x86_Kconfig.cache')
-//BufferedInputStream bufferedFileInputStream = file.newInputStream()
+def file = new File('/Users/jharth/IdeaProjects/kconfig-to-xml/src/main/script/res/arch_mips_Kconfig.cache')
+//BufferedInputStream bufferedInputStream = url.newInputStream()
+BufferedInputStream bufferedInputStream = file.newInputStream()
 
 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()
 
-PreProcessor.process(bufferedUrlInputStream, byteArrayOutputStream)
+PreProcessor.process(bufferedInputStream, byteArrayOutputStream)
 
 def result = byteArrayOutputStream.toString()
 

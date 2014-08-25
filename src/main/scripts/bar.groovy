@@ -6,7 +6,7 @@ import com.initvoid.jconfig.PreProcessor
 import com.initvoid.jconfig.zconf.Input
 import com.initvoid.jconfig.zconf.ZConfLexer
 import com.initvoid.jconfig.zconf.ZConfParser
-import org.antlr.runtime.ANTLRInputStream
+import org.antlr.runtime.ANTLRReaderStream
 import org.antlr.runtime.CommonTokenStream
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
@@ -28,9 +28,11 @@ Logger logger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME)
 logger.level = Level.DEBUG
 logger.addAppender(socketAppender)
 
-//Input result = test('C:\\Users\\MMX\\IdeaProjects\\378b037ec0913cad7218\\src\\main\\script\\res\\drivers_virtio_Kconfig.cache')
 
-List<Input> result = testDirectoryEntries(Paths.get('C:\\Users\\MMX\\IdeaProjects\\378b037ec0913cad7218\\src\\main\\script\\res'), '*.cache')
+//Input result = test('/Users/jharth/IdeaProjects/kconfig-to-xml/src/main/script/res/arch_mips_Kconfig.cache')
+
+List<Input> result = testDirectoryEntries(Paths.get('/Users/jharth/IdeaProjects/kconfig-to-xml/src/main/script/res'), '*.cache')
+
 
 socketAppender.stop()
 loggerContext.stop()
@@ -60,7 +62,7 @@ List<Input> testDirectoryEntries(Path dir, String glob)
 
 Input test(URL url)
 {
-    test(url.newInputStream(), url as String)
+    test(url.newReader(), url as String)
 }
 
 Input test(String path)
@@ -70,15 +72,15 @@ Input test(String path)
 
 Input test(Path path)
 {
-     test(path.newInputStream(), path as String)
+     test(path.newReader(), path as String)
 }
 
-Input test(BufferedInputStream bufferedInputStream, String reference)
+Input test(Reader reader, String reference)
 {
-    PipedOutputStream pipedOutputStream = new PipedOutputStream()
-    PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream)
+    PipedWriter pipedWriter = new PipedWriter()
+    PipedReader pipedReader = new PipedReader(pipedWriter)
 
-    PreProcessingWorker.process(bufferedInputStream, pipedOutputStream)
+    PreProcessor.ThreadWorker.process(reader, pipedWriter)
 
     Input result = null
 
@@ -86,9 +88,9 @@ Input test(BufferedInputStream bufferedInputStream, String reference)
 
     try
     {
-        ANTLRInputStream antlrInputStream = new ANTLRInputStream(pipedInputStream)
+        ANTLRReaderStream antlrReaderStream = new ANTLRReaderStream(pipedReader)
 
-        ZConfLexer lexer = new ZConfLexer(antlrInputStream)
+        ZConfLexer lexer = new ZConfLexer(antlrReaderStream)
         if (lexer.numberOfSyntaxErrors > 0)
         {
             println "Lexer  SyntaxErrors $lexer.numberOfSyntaxErrors"
@@ -109,27 +111,4 @@ Input test(BufferedInputStream bufferedInputStream, String reference)
     }
 
     result
-}
-
-class PreProcessingWorker implements Runnable
-{
-    InputStream inputStream
-    OutputStream outputStream
-
-    @Override
-    void run()
-    {
-        PreProcessor.process(inputStream, outputStream)
-        outputStream.close()
-    }
-
-    static void process(InputStream inputStream, OutputStream outputStream)
-    {
-        def worker = new PreProcessingWorker()
-        worker.inputStream = inputStream
-        worker.outputStream = outputStream
-        def thread = new Thread(worker)
-        thread.daemon = true
-        thread.start()
-    }
 }
