@@ -20,4 +20,5 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     //compile 'org.freedesktop.tango:tango-icon-theme:0.8.90'
     //compile 'org.controlsfx:controlsfx:8.0.6'
+    testCompile  'org.spockframework:spock-core:0.7-groovy-2.0'
 }
