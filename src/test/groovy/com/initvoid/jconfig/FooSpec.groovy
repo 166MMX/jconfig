@@ -1,35 +1,13 @@
 package com.initvoid.jconfig
 
-import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Unroll
 
 class FooSpec extends Specification
 {
-    @Shared
-    List<String> validInput    = []
-    @Shared
-    List<String> validOutput   = []
-    @Shared
-    List<String> invalidInput  = []
-    @Shared
-    List<String> invalidOutput = []
-
-    void addValidSpec(String input, String output)
+    def "a"()
     {
-        validInput   << input
-        validOutput  << output
-    }
-
-    void addInvalidSpec(String input, String output)
-    {
-        invalidInput   << input
-        invalidOutput  << output
-    }
-
-    void setupSpec()
-    {
-        addValidSpec("""choice
+        setup:
+        def input   = """choice
 \tprompt "Board support"
 \tdepends on BCM63XX
 \tdefault BOARD_BCM963XX
@@ -41,7 +19,8 @@ config BOARD_BCM963XX
          asdasd asd
 
 endchoice
-""", """choice
+"""
+        def output  = """choice
 \tprompt "Board support"
 \tdepends on BCM63XX
 \tdefault BOARD_BCM963XX
@@ -53,31 +32,16 @@ config BOARD_BCM963XX
 \u001F         asdasd asd
 \u001F
 endchoice
-""")
-        addValidSpec("""choice
-\tprompt "Board support"
-\tdepends on BCM63XX
-\tdefault BOARD_BCM963XX
+"""
 
-config BOARD_BCM963XX
-       bool "Generic Broadcom 963xx boards"
-\tselect SSB
-       help
+        expect:
+        output == process(input)
+    }
 
-endchoice
-""","""choice
-\tprompt "Board support"
-\tdepends on BCM63XX
-\tdefault BOARD_BCM963XX
-
-config BOARD_BCM963XX
-       bool "Generic Broadcom 963xx boards"
-\tselect SSB
-       help
-\u001F\u001F
-endchoice
-""")
-        addValidSpec("""if SOC_SAM_V7
+    def "b"()
+    {
+        setup:
+        def input   = """if SOC_SAM_V7
 config SOC_SAMA5D3
 \tbool "SAMA5D3 family"
 \tselect SOC_SAMA5
@@ -90,7 +54,8 @@ config SOC_SAMA5D3
 \t  Select this if you are using one of Atmel's SAMA5D3 family SoC.
 \t  This support covers SAMA5D31, SAMA5D33, SAMA5D34, SAMA5D35, SAMA5D36.
 endif
-""","""if SOC_SAM_V7
+"""
+        def output  = """if SOC_SAM_V7
 config SOC_SAMA5D3
 \tbool "SAMA5D3 family"
 \tselect SOC_SAMA5
@@ -103,8 +68,98 @@ config SOC_SAMA5D3
 \u001F\t  Select this if you are using one of Atmel's SAMA5D3 family SoC.
 \t  This support covers SAMA5D31, SAMA5D33, SAMA5D34, SAMA5D35, SAMA5D36.\u001F
 endif
-""")
-        addValidSpec("""choice
+"""
+
+        expect:
+        output == process(input)
+    }
+
+    def "help followed by EOF"()
+    {
+        setup:
+        def input   = """config DRM_PTN3460
+\ttristate "PTN3460 DP/LVDS bridge"
+\tdepends on DRM
+\tselect DRM_KMS_HELPER
+\t---help---
+"""
+        def output  = """config DRM_PTN3460
+\ttristate "PTN3460 DP/LVDS bridge"
+\tdepends on DRM
+\tselect DRM_KMS_HELPER
+\t   help\u0020\u0020\u0020
+\u001F\u001F
+"""
+
+        expect:
+        output == process(input)
+    }
+
+    def "empty help"()
+    {
+        setup:
+        def input   = """choice
+\tprompt "Board support"
+\tdepends on BCM63XX
+\tdefault BOARD_BCM963XX
+
+config BOARD_BCM963XX
+       bool "Generic Broadcom 963xx boards"
+\tselect SSB
+       help
+
+endchoice
+"""
+        def output  = """choice
+\tprompt "Board support"
+\tdepends on BCM63XX
+\tdefault BOARD_BCM963XX
+
+config BOARD_BCM963XX
+       bool "Generic Broadcom 963xx boards"
+\tselect SSB
+       help
+\u001F\u001F
+endchoice
+"""
+
+        expect:
+        output == process(input)
+    }
+
+    def "one line help"()
+    {
+        setup:
+        def input   = """config ARCH_HIX5HD2
+\tbool "Hisilicon X5HD2 family" if ARCH_MULTI_V7
+\tselect CACHE_L2X0
+\tselect HAVE_ARM_SCU if SMP
+\tselect HAVE_ARM_TWD if SMP
+\tselect PINCTRL
+\tselect PINCTRL_SINGLE
+\thelp
+\t  Support for Hisilicon HIX5HD2 SoC family
+endmenu"""
+        def output  = """config ARCH_HIX5HD2
+\tbool "Hisilicon X5HD2 family" if ARCH_MULTI_V7
+\tselect CACHE_L2X0
+\tselect HAVE_ARM_SCU if SMP
+\tselect HAVE_ARM_TWD if SMP
+\tselect PINCTRL
+\tselect PINCTRL_SINGLE
+\thelp
+\u001F\t  Support for Hisilicon HIX5HD2 SoC family\u001F
+endmenu
+"""
+
+        expect:
+        output == process(input)
+    }
+
+    def "paragraphed (two new lines) help"()
+    {
+        setup:
+        def input   = """choice
 \tprompt "Alpha system type"
 \tdefault ALPHA_GENERIC
 \t---help---
@@ -149,7 +204,8 @@ endif
 config ALPHA_GENERIC
 \tbool "Generic"
 \tdepends on TTY
-""","""choice
+"""
+        def output  = """choice
 \tprompt "Alpha system type"
 \tdefault ALPHA_GENERIC
 \t   help\u0020\u0020\u0020
@@ -194,75 +250,19 @@ config ALPHA_GENERIC
 config ALPHA_GENERIC
 \tbool "Generic"
 \tdepends on TTY
-""")
-        addValidSpec("""config ARCH_HIX5HD2
-\tbool "Hisilicon X5HD2 family" if ARCH_MULTI_V7
-\tselect CACHE_L2X0
-\tselect HAVE_ARM_SCU if SMP
-\tselect HAVE_ARM_TWD if SMP
-\tselect PINCTRL
-\tselect PINCTRL_SINGLE
-\thelp
-\t  Support for Hisilicon HIX5HD2 SoC family
-endmenu""","""config ARCH_HIX5HD2
-\tbool "Hisilicon X5HD2 family" if ARCH_MULTI_V7
-\tselect CACHE_L2X0
-\tselect HAVE_ARM_SCU if SMP
-\tselect HAVE_ARM_TWD if SMP
-\tselect PINCTRL
-\tselect PINCTRL_SINGLE
-\thelp
-\u001F\t  Support for Hisilicon HIX5HD2 SoC family\u001F
-endmenu
-""")
-        addValidSpec("""config DRM_PTN3460
-\ttristate "PTN3460 DP/LVDS bridge"
-\tdepends on DRM
-\tselect DRM_KMS_HELPER
-\t---help---
-""","""config DRM_PTN3460
-\ttristate "PTN3460 DP/LVDS bridge"
-\tdepends on DRM
-\tselect DRM_KMS_HELPER
-\t   help\u0020\u0020\u0020
-\u001F\u001F
-""")
+"""
 
+        expect:
+        output == process(input)
     }
 
-    @Unroll
-    def "blue pill"()
+    def String process(String input)
     {
         def writer = new StringWriter()
         def reader = new StringReader(input)
 
         PreProcessor.process(reader, writer)
 
-        def result = writer.toString()
-
-        expect:
-        result == output
-
-        where:
-        input   << getValidInput()
-        output  << getValidOutput()
-    }
-
-    @Unroll
-    def "red pill"()
-    {
-        def writer = new StringWriter()
-        def reader = new StringReader(input)
-
-        PreProcessor.process(reader, writer)
-
-        def result = writer.toString()
-
-        expect:
-        result != output
-
-        where:
-        input   << getInvalidInput()
-        output  << getInvalidOutput()
+        writer.toString()
     }
 }
