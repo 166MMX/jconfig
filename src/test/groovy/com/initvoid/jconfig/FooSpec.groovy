@@ -29,81 +29,81 @@ class FooSpec extends Specification
 
     void setupSpec()
     {
-//        addValidSpec("""choice
-//\tprompt "Board support"
-//\tdepends on BCM63XX
-//\tdefault BOARD_BCM963XX
-//
-//config BOARD_BCM963XX
-//       bool "Generic Broadcom 963xx boards"
-//\tselect SSB
-//       help
-//         asdasd asd
-//
-//endchoice
-//""", """choice
-//\tprompt "Board support"
-//\tdepends on BCM63XX
-//\tdefault BOARD_BCM963XX
-//
-//config BOARD_BCM963XX
-//       bool "Generic Broadcom 963xx boards"
-//\tselect SSB
-//       help
-//\u001F         asdasd asd\u001F
-//
-//endchoice
-//""")
-//        addValidSpec("""choice
-//\tprompt "Board support"
-//\tdepends on BCM63XX
-//\tdefault BOARD_BCM963XX
-//
-//config BOARD_BCM963XX
-//       bool "Generic Broadcom 963xx boards"
-//\tselect SSB
-//       help
-//
-//endchoice
-//""","""choice
-//\tprompt "Board support"
-//\tdepends on BCM63XX
-//\tdefault BOARD_BCM963XX
-//
-//config BOARD_BCM963XX
-//       bool "Generic Broadcom 963xx boards"
-//\tselect SSB
-//       help
-//\u001F\u001F
-//endchoice
-//""")
-//        addValidSpec("""if SOC_SAM_V7
-//config SOC_SAMA5D3
-//\tbool "SAMA5D3 family"
-//\tselect SOC_SAMA5
-//\tselect HAVE_FB_ATMEL
-//\tselect HAVE_AT91_DBGU1
-//\tselect HAVE_AT91_UTMI
-//\tselect HAVE_AT91_SMD
-//\tselect HAVE_AT91_USB_CLK
-//\thelp
-//\t  Select this if you are using one of Atmel's SAMA5D3 family SoC.
-//\t  This support covers SAMA5D31, SAMA5D33, SAMA5D34, SAMA5D35, SAMA5D36.
-//endif
-//""","""if SOC_SAM_V7
-//config SOC_SAMA5D3
-//\tbool "SAMA5D3 family"
-//\tselect SOC_SAMA5
-//\tselect HAVE_FB_ATMEL
-//\tselect HAVE_AT91_DBGU1
-//\tselect HAVE_AT91_UTMI
-//\tselect HAVE_AT91_SMD
-//\tselect HAVE_AT91_USB_CLK
-//\thelp
-//\u001F\t  Select this if you are using one of Atmel's SAMA5D3 family SoC.
-//\t  This support covers SAMA5D31, SAMA5D33, SAMA5D34, SAMA5D35, SAMA5D36.\u001F
-//endif
-//""")
+        addValidSpec("""choice
+\tprompt "Board support"
+\tdepends on BCM63XX
+\tdefault BOARD_BCM963XX
+
+config BOARD_BCM963XX
+       bool "Generic Broadcom 963xx boards"
+\tselect SSB
+       help
+         asdasd asd
+
+endchoice
+""", """choice
+\tprompt "Board support"
+\tdepends on BCM63XX
+\tdefault BOARD_BCM963XX
+
+config BOARD_BCM963XX
+       bool "Generic Broadcom 963xx boards"
+\tselect SSB
+       help
+\u001F         asdasd asd
+\u001F
+endchoice
+""")
+        addValidSpec("""choice
+\tprompt "Board support"
+\tdepends on BCM63XX
+\tdefault BOARD_BCM963XX
+
+config BOARD_BCM963XX
+       bool "Generic Broadcom 963xx boards"
+\tselect SSB
+       help
+
+endchoice
+""","""choice
+\tprompt "Board support"
+\tdepends on BCM63XX
+\tdefault BOARD_BCM963XX
+
+config BOARD_BCM963XX
+       bool "Generic Broadcom 963xx boards"
+\tselect SSB
+       help
+\u001F\u001F
+endchoice
+""")
+        addValidSpec("""if SOC_SAM_V7
+config SOC_SAMA5D3
+\tbool "SAMA5D3 family"
+\tselect SOC_SAMA5
+\tselect HAVE_FB_ATMEL
+\tselect HAVE_AT91_DBGU1
+\tselect HAVE_AT91_UTMI
+\tselect HAVE_AT91_SMD
+\tselect HAVE_AT91_USB_CLK
+\thelp
+\t  Select this if you are using one of Atmel's SAMA5D3 family SoC.
+\t  This support covers SAMA5D31, SAMA5D33, SAMA5D34, SAMA5D35, SAMA5D36.
+endif
+""","""if SOC_SAM_V7
+config SOC_SAMA5D3
+\tbool "SAMA5D3 family"
+\tselect SOC_SAMA5
+\tselect HAVE_FB_ATMEL
+\tselect HAVE_AT91_DBGU1
+\tselect HAVE_AT91_UTMI
+\tselect HAVE_AT91_SMD
+\tselect HAVE_AT91_USB_CLK
+\thelp
+\u001F\t  Select this if you are using one of Atmel's SAMA5D3 family SoC.
+\t  This support covers SAMA5D31, SAMA5D33, SAMA5D34, SAMA5D35, SAMA5D36.\u001F
+endif
+""")
         addValidSpec("""choice
 \tprompt "Alpha system type"
 \tdefault ALPHA_GENERIC
@@ -189,8 +189,8 @@ config ALPHA_GENERIC
 \t  Titan               AlphaServer ES45 / DS25 / DS15
 \t  Wildfire            AlphaServer GS 40/80/160/320
 
-\t  If you don't know what to do, choose "generic".\u001F
-
+\t  If you don't know what to do, choose "generic".
+\u001F
 config ALPHA_GENERIC
 \tbool "Generic"
 \tdepends on TTY
@@ -215,6 +215,19 @@ endmenu""","""config ARCH_HIX5HD2
 \u001F\t  Support for Hisilicon HIX5HD2 SoC family\u001F
 endmenu
 """)
+        addValidSpec("""config DRM_PTN3460
+\ttristate "PTN3460 DP/LVDS bridge"
+\tdepends on DRM
+\tselect DRM_KMS_HELPER
+\t---help---
+""","""config DRM_PTN3460
+\ttristate "PTN3460 DP/LVDS bridge"
+\tdepends on DRM
+\tselect DRM_KMS_HELPER
+\t   help\u0020\u0020\u0020
+\u001F\u001F
+""")
+
     }
 
     @Unroll
