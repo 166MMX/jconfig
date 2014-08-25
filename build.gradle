@@ -1,0 +1,23 @@
+apply plugin: 'groovy'
+apply plugin: 'application'
+apply plugin: 'idea'
+apply plugin: 'wrapper'
+apply from: 'antlr3.gradle'
+
+wrapper.gradleVersion = '2.0'
+sourceCompatibility = '1.8'
+idea.project.jdkName = '1.8'
+idea.project.languageLevel = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.3.5'
+    compile 'ch.qos.logback:logback-classic:1.1.2'
+    compile 'org.apache.commons:commons-lang3:3.3.2'
+    compile 'commons-io:commons-io:2.4'
+    //compile 'org.freedesktop.tango:tango-icon-theme:0.8.90'
+    //compile 'org.controlsfx:controlsfx:8.0.6'
+}
