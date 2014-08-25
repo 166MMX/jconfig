@@ -53,6 +53,9 @@ tokens {
 
 @parser::header {package com.initvoid.jconfig.zconf;
 
+//import org.apache.commons.io.HexDump;
+//import java.io.IOException;
+
 import com.initvoid.jconfig.zconf.Input;
 import com.initvoid.jconfig.zconf.expr.model.Expression;
 import com.initvoid.jconfig.zconf.expr.model.ExpressionImpl;
@@ -489,6 +492,8 @@ help_text
     returns                                     [ String result ]
     :   T_HELP_TEXT                             { result = $T_HELP_TEXT.text; }
     ;
+
+// try { HexDump.dump((T_HELP_TEXT59!=null?T_HELP_TEXT59.getText():null).getBytes(), 0, System.out, 0); } catch (IOException e) { e.printStackTrace(); }
 
 help_end
     :   T_EOL
