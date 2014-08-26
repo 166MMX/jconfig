@@ -25,7 +25,10 @@ task generateGrammarSource(type: JavaExec) {
     def inputTree = fileTree("$project.projectDir/src/$sourceSetName/$languageName")
     def outputDir = file("$project.buildDir/generated-src/$languageName/$sourceSetName")
 
-    inputTree.include '**/*.g'
+    def glob = '**/*.g'
+    def debug = false
+
+    inputTree.include glob
     mkdir(outputDir)
 
     inputs.files inputTree
@@ -36,7 +39,10 @@ task generateGrammarSource(type: JavaExec) {
     main = 'org.antlr.Tool'
     classpath = configurations.antlr
     args = ['-o', outputDir, inputTree.files].flatten()
-    // '-debug',
+    if (debug)
+    {
+        args = ['-debug', '-o', outputDir, inputTree.files].flatten()
+    }
 
     inputTree.files.each { file ->
         def grammarFile = inputTree.dir.toPath().relativize(file.toPath())
@@ -54,7 +60,10 @@ task generateTestGrammarSource(type: JavaExec) {
     def inputTree = fileTree("$project.projectDir/src/$sourceSetName/$languageName")
     def outputDir = file("$project.buildDir/generated-src/$languageName/$sourceSetName")
 
-    inputTree.include '**/*.g'
+    def glob = '**/*.g'
+    def debug = false
+
+    inputTree.include glob
     mkdir(outputDir)
 
     inputs.files inputTree
@@ -65,7 +74,10 @@ task generateTestGrammarSource(type: JavaExec) {
     main = 'org.antlr.Tool'
     classpath = configurations.antlr
     args = ['-o', outputDir, inputTree.files].flatten()
-    // '-debug',
+    if (debug)
+    {
+        args = ['-debug', '-o', outputDir, inputTree.files].flatten()
+    }
 
     inputTree.files.each { file ->
         def grammarFile = inputTree.dir.toPath().relativize(file.toPath())
