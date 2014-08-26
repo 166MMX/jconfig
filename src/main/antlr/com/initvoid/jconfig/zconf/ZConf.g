@@ -478,8 +478,7 @@ visible
 help
     returns                                     [ HelpProperty result ]
     :   start=help_start                        { result = $start.result; }
-        text=help_text                          { result.setText($text.result); }
-        help_end
+        text=help_text?                         { result.setText($text.result); }
     ;
     
 help_start
@@ -491,13 +490,10 @@ help_start
 help_text
     returns                                     [ String result ]
     :   T_HELP_TEXT                             { result = $T_HELP_TEXT.text; }
+        T_EOL
     ;
 
 // try { HexDump.dump((T_HELP_TEXT59!=null?T_HELP_TEXT59.getText():null).getBytes(), 0, System.out, 0); } catch (IOException e) { e.printStackTrace(); }
-
-help_end
-    :   T_EOL
-    ;
 
 option_param_list
     returns                                     [ List result ]
