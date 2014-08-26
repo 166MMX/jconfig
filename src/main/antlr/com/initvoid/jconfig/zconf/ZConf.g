@@ -51,10 +51,9 @@ tokens {
     T_SQUOT  = '\''  ;
 }
 
-@parser::header {package com.initvoid.jconfig.zconf;
+@lexer::header {package com.initvoid.jconfig.zconf;}
 
-//import org.apache.commons.io.HexDump;
-//import java.io.IOException;
+@parser::header {package com.initvoid.jconfig.zconf;
 
 import com.initvoid.jconfig.zconf.Input;
 import com.initvoid.jconfig.zconf.expr.model.Expression;
@@ -88,49 +87,7 @@ import com.initvoid.jconfig.zconf.statement.MenuStatement;
 import com.initvoid.jconfig.zconf.statement.SourceStatement;
 import com.initvoid.jconfig.zconf.statement.Statement;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.regex.Pattern;
 import java.util.LinkedList;}
-
-@lexer::header {package com.initvoid.jconfig.zconf;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;}
-
-@parser::members {private static final Logger logger = LoggerFactory.getLogger(ZConfParser.class);
-
-private static final Pattern SURROUNDING_QUOTES_PATTERN = Pattern.compile("^\"|\"$|^'|'$");
-
-@Override public void displayRecognitionError(String[] tokenNames, RecognitionException ex)
-{
-    String hdr = getErrorHeader(ex);
-    String msg = getErrorMessage(ex, tokenNames);
-    if (logger.isErrorEnabled()) logger.error(hdr + " " + msg, ex);
-}
-
-private static String getQuotedStringValue(String value)
-{
-    if (value == null)
-    {
-        return null;
-    }
-    value = SURROUNDING_QUOTES_PATTERN.matcher(value).replaceAll("");
-    value = StringEscapeUtils.unescapeJava(value);
-    return value;
-}}
-
-@lexer::members {private static final Logger logger = LoggerFactory.getLogger(ZConfLexer.class);
-
-@Override public void displayRecognitionError(String[] tokenNames, RecognitionException ex)
-{
-    String hdr = getErrorHeader(ex);
-    String msg = getErrorMessage(ex, tokenNames);
-    if (logger.isErrorEnabled()) logger.error(hdr + " " + msg, ex);
-}}
 
 input
     returns                                     [ Input result ]
