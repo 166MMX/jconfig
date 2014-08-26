@@ -1,11 +1,13 @@
 package com.initvoid.jconfig.zconf
 
+import groovy.transform.CompileStatic
 import org.antlr.runtime.CharStream
 import org.antlr.runtime.RecognitionException
 import org.antlr.runtime.RecognizerSharedState
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@CompileStatic
 abstract class Lexer extends org.antlr.runtime.Lexer
 {
     Lexer() {

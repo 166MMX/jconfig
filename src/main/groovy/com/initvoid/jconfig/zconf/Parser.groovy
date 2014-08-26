@@ -1,5 +1,6 @@
 package com.initvoid.jconfig.zconf
 
+import groovy.transform.CompileStatic
 import org.antlr.runtime.RecognitionException
 import org.antlr.runtime.RecognizerSharedState
 import org.antlr.runtime.TokenStream
@@ -7,13 +8,10 @@ import org.apache.commons.lang3.StringEscapeUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import java.util.regex.Pattern
-
+@CompileStatic
 abstract class Parser extends org.antlr.runtime.Parser
 {
     protected static final Logger logger = LoggerFactory.getLogger(ZConfParser.class)
-
-    private static final Pattern SURROUNDING_QUOTES_PATTERN = ~/^"|"\u0024|^'|'\u0024/
 
     Parser(TokenStream input) {
         super(input)
@@ -30,14 +28,24 @@ abstract class Parser extends org.antlr.runtime.Parser
         if (logger.isErrorEnabled()) logger.error("$hdr $msg", ex)
     }
 
-    protected static String getQuotedStringValue(String value)
+    protected static String parseJavaString(String value)
     {
         if (value == null)
         {
             return null
         }
-        value = SURROUNDING_QUOTES_PATTERN.matcher(value).replaceAll('')
+        value = value[1..-2]
         value = StringEscapeUtils.unescapeJava(value)
+        return value
+    }
+
+    protected static String stripHelpTextDelimiters(String value)
+    {
+        if (value == null)
+        {
+            return null
+        }
+        value = value[1..-2]
         return value
     }
 }

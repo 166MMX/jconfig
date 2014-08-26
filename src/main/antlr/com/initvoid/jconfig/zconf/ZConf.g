@@ -273,6 +273,12 @@ if_start
         expr                                    { result.setCondition($expr.result); }
         T_EOL
     ;
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
 
 if_sub_stmt_list
     returns                                     [ List<Statement> result ]
@@ -351,6 +357,12 @@ type_option
         if_option_frag?                         { result.setCondition($if_option_frag.result); }
         T_EOL
     ;
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
 
 prompt_option
     returns                                     [ PromptProperty result ]
@@ -359,6 +371,12 @@ prompt_option
         if_option_frag?                         { result.setCondition($if_option_frag.result); }
         T_EOL
     ;
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
 
 default_config_option
     returns                                     [ DefaultProperty result ]
@@ -370,6 +388,12 @@ default_config_option
         if_option_frag?                         { result.setCondition($if_option_frag.result); }
         T_EOL
     ;
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
 
 default_choice_option
     returns                                     [ DefaultProperty result ]
@@ -381,6 +405,12 @@ default_choice_option
         if_option_frag?                         { result.setCondition($if_option_frag.result); }
         T_EOL
     ;
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
 
 select_option
     returns                                     [ SelectProperty result ]
@@ -389,6 +419,12 @@ select_option
         if_option_frag?                         { result.setCondition($if_option_frag.result); }
         T_EOL
     ;
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
 
 range_option
     returns                                     [ RangeProperty result ]
@@ -398,6 +434,12 @@ range_option
         if_option_frag?                         { result.setCondition($if_option_frag.result); }
         T_EOL
     ;
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
 
 option_option
     returns                                     [ OptionProperty result ]
@@ -424,14 +466,26 @@ depends
         expr                                    { result.setExpression($expr.result); }
         T_EOL
     ;
-    
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
+
 visible
     returns                                     [ VisibleProperty result ]
     :   'visible'                               { result = new VisibleProperty(); }
         if_option_frag?                         { result.setCondition($if_option_frag.result); }
         T_EOL
     ;    
-    
+    catch                                       [ RecognitionException re ]
+                                                {
+                                                  result = null;
+                                                  reportError(re);
+                                                  recover(input,re);
+                                                }
+
 help
     returns                                     [ HelpProperty result ]
     :   start=help_start                        { result = $start.result; }
@@ -446,7 +500,7 @@ help_start
 
 help_text
     returns                                     [ String result ]
-    :   T_HELP_TEXT                             { result = $T_HELP_TEXT.text; }
+    :   T_HELP_TEXT                             { result = stripHelpTextDelimiters($T_HELP_TEXT.text); }
         T_EOL
     ;
 
@@ -482,7 +536,7 @@ all_no_config_y_option_param
 prompt_value
     returns                                     [ String result ]
     :   T_WORD                                  { result = $T_WORD.text; }
-    |   T_WORD_QUOTE                            { result = getQuotedStringValue($T_WORD_QUOTE.text); }
+    |   T_WORD_QUOTE                            { result = parseJavaString($T_WORD_QUOTE.text); }
     ;
 
 // ================================================================
@@ -534,7 +588,7 @@ list_expr
 symbol
     returns                                     [ Symbol result ]
     :    T_WORD                                 { result = new Symbol($T_WORD.text); }
-    |    T_WORD_QUOTE                           { result = new Symbol(getQuotedStringValue($T_WORD_QUOTE.text)); }
+    |    T_WORD_QUOTE                           { result = new Symbol(parseJavaString($T_WORD_QUOTE.text)); }
     ;
 
 // ================================================================
@@ -571,6 +625,26 @@ T_WORD_QUOTE
 
 T_WORD
     :   ('a'..'z'|'A'..'Z'|'0'..'9'|'_'|'-'|'/'|'.')+
+    ;
+
+T_INVALID
+    :   '>'
+    |   '>='
+    |   '<'
+    |   '<='
+    |   '=='
+    |   '==='
+    |   '!=='
+    |   '<>'
+    |   '<=>'
+    |   '?:'
+    |   '|'
+    |   '&'
+    |   '^'
+    |   '~'
+    |   '<<'
+    |   '>>'
+    |   '>>>'
     ;
 
 fragment
