@@ -18,6 +18,7 @@ class PreProcessor
 
     static void process(Reader reader, Writer writer, String helpDelimiter)
     {
+        // init
         boolean  firstLineInStream           = true
 
         boolean  helpContextActive           = false
@@ -29,6 +30,7 @@ class PreProcessor
         int      firstIndent                 = INIT_LENGTH
         int      currentIndent               = INIT_LENGTH
 
+        // start
         String   currentLine                 = reader.readLine()
         String   nextLine
 
@@ -36,6 +38,7 @@ class PreProcessor
         {
             nextLine = reader.readLine()
 
+            // reset
             if (helpContextActive && endHelpWritten)
             {
                 helpContextActive           = false
@@ -47,6 +50,8 @@ class PreProcessor
                 firstIndent                 = INIT_LENGTH
                 currentIndent               = INIT_LENGTH
             }
+
+            // analyze the content carefully choose some actions
             if (helpContextActive)
             {
                 if (!startHelpWritten)
@@ -81,6 +86,7 @@ class PreProcessor
                 currentLine        = currentLine.tr('-', ' ')
             }
 
+            // do the hard work
             if (endHelpBeforeCurrentLine && !endHelpWritten && startHelpWritten)
             {
                 writer.write(helpDelimiter)
@@ -114,6 +120,7 @@ class PreProcessor
             currentLine = nextLine
         }
 
+        // finish help context if started and left open
         if (helpContextActive)
         {
             if (startHelpWritten && !endHelpWritten)
