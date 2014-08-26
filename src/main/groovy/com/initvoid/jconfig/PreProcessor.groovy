@@ -1,18 +1,22 @@
 package com.initvoid.jconfig
 
 import groovy.transform.CompileStatic
-import org.apache.commons.io.HexDump
 
 import java.util.regex.Pattern
 
 @CompileStatic
 class PreProcessor
 {
-    static Pattern  HELP_PATTERN    = ~/(?i)\s*(---)?\s*\bhelp\b\s*(---)?\s*/
+    static Pattern  HELP_PATTERN    = ~/(?i)^(\s|---)*\bhelp\b(\s|---)*/
     static String   HELP_DELIMITER  = '\u001F'
     static int      INIT_LENGTH     = -1
 
     static void process(Reader reader, Writer writer)
+    {
+        process(reader, writer, HELP_DELIMITER)
+    }
+
+    static void process(Reader reader, Writer writer, String helpDelimiter)
     {
         boolean  firstLineInStream           = true
 
@@ -79,7 +83,7 @@ class PreProcessor
 
             if (endHelpBeforeCurrentLine && !endHelpWritten && startHelpWritten)
             {
-                writer.write(HELP_DELIMITER)
+                writer.write(helpDelimiter)
                 endHelpWritten = true
             }
 
@@ -95,7 +99,7 @@ class PreProcessor
 
             if (startHelpBeforeCurrentLine && !startHelpWritten)
             {
-                writer.write(HELP_DELIMITER)
+                writer.write(helpDelimiter)
                 startHelpWritten = true
             }
 
@@ -103,17 +107,20 @@ class PreProcessor
 
             if (endHelpAfterCurrentLine && !endHelpWritten)
             {
-                writer.write(HELP_DELIMITER)
+                writer.write(helpDelimiter)
                 endHelpWritten = true
             }
 
             currentLine = nextLine
         }
 
-        if (helpContextActive && !endHelpWritten)
+        if (helpContextActive)
         {
-            writer.write(HELP_DELIMITER)
-            endHelpWritten = true
+            if (startHelpWritten && !endHelpWritten)
+            {
+                writer.write(helpDelimiter)
+                endHelpWritten = true
+            }
         }
 
         // end last line
@@ -155,21 +162,28 @@ class PreProcessor
     {
         Reader reader
         Writer writer
+        String delimiter
 
         @Override
         void run()
         {
-            PreProcessor.process(reader, writer)
+            PreProcessor.process(reader, writer, delimiter)
             writer.close()
         }
 
         static void process(Reader reader, Writer writer)
         {
-            def worker     = new ThreadWorker()
-            worker.reader  = reader
-            worker.writer  = writer
-            def thread     = new Thread(worker)
-            thread.daemon  = true
+            process(reader, writer, PreProcessor.HELP_DELIMITER)
+        }
+
+        static void process(Reader reader, Writer writer, String helpDelimiter)
+        {
+            def worker        = new ThreadWorker()
+            worker.reader     = reader
+            worker.writer     = writer
+            worker.delimiter  = helpDelimiter
+            def thread        = new Thread(worker)
+            thread.daemon     = true
             thread.start()
         }
     }

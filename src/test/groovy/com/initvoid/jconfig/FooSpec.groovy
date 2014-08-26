@@ -4,6 +4,8 @@ import spock.lang.Specification
 
 class FooSpec extends Specification
 {
+    static String HELP_DELIMITER = '§'
+
     def "a"()
     {
         setup:
@@ -29,8 +31,8 @@ config BOARD_BCM963XX
        bool "Generic Broadcom 963xx boards"
 \tselect SSB
        help
-\u001F         asdasd asd
-\u001F
+$HELP_DELIMITER         asdasd asd
+$HELP_DELIMITER
 endchoice
 """
 
@@ -65,8 +67,8 @@ config SOC_SAMA5D3
 \tselect HAVE_AT91_SMD
 \tselect HAVE_AT91_USB_CLK
 \thelp
-\u001F\t  Select this if you are using one of Atmel's SAMA5D3 family SoC.
-\t  This support covers SAMA5D31, SAMA5D33, SAMA5D34, SAMA5D35, SAMA5D36.\u001F
+$HELP_DELIMITER\t  Select this if you are using one of Atmel's SAMA5D3 family SoC.
+\t  This support covers SAMA5D31, SAMA5D33, SAMA5D34, SAMA5D35, SAMA5D36.$HELP_DELIMITER
 endif
 """
 
@@ -88,7 +90,6 @@ endif
 \tdepends on DRM
 \tselect DRM_KMS_HELPER
 \t   help\u0020\u0020\u0020
-\u001F\u001F
 """
 
         expect:
@@ -119,7 +120,7 @@ config BOARD_BCM963XX
        bool "Generic Broadcom 963xx boards"
 \tselect SSB
        help
-\u001F\u001F
+$HELP_DELIMITER$HELP_DELIMITER
 endchoice
 """
 
@@ -148,7 +149,7 @@ endmenu"""
 \tselect PINCTRL
 \tselect PINCTRL_SINGLE
 \thelp
-\u001F\t  Support for Hisilicon HIX5HD2 SoC family\u001F
+$HELP_DELIMITER\t  Support for Hisilicon HIX5HD2 SoC family$HELP_DELIMITER
 endmenu
 """
 
@@ -209,7 +210,7 @@ config ALPHA_GENERIC
 \tprompt "Alpha system type"
 \tdefault ALPHA_GENERIC
 \t   help\u0020\u0020\u0020
-\u001F\t  This is the system type of your hardware.  A "generic" kernel will
+$HELP_DELIMITER\t  This is the system type of your hardware.  A "generic" kernel will
 \t  run on any supported Alpha system. However, if you configure a
 \t  kernel for your specific system, it will be faster and smaller.
 
@@ -246,7 +247,7 @@ config ALPHA_GENERIC
 \t  Wildfire            AlphaServer GS 40/80/160/320
 
 \t  If you don't know what to do, choose "generic".
-\u001F
+$HELP_DELIMITER
 config ALPHA_GENERIC
 \tbool "Generic"
 \tdepends on TTY
@@ -261,7 +262,7 @@ config ALPHA_GENERIC
         def writer = new StringWriter()
         def reader = new StringReader(input)
 
-        PreProcessor.process(reader, writer)
+        PreProcessor.process(reader, writer, HELP_DELIMITER)
 
         writer.toString()
     }
