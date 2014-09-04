@@ -1,143 +1,233 @@
 package com.initvoid.antlr3
 
 import groovy.transform.CompileStatic
+import org.antlr.runtime.BufferedTokenStream
+import org.antlr.runtime.LegacyCommonTokenStream
 import org.antlr.runtime.Token
 import org.antlr.runtime.TokenSource
 import org.antlr.runtime.TokenStream
+import org.antlr.runtime.UnbufferedTokenStream
 
 @CompileStatic
 public class TokenStreamSelector implements TokenStream
 {
-    Set<String> stringHashSet = new HashSet<>()
-    Set<TokenStream> tokenStreamHashSet = new HashSet<>()
+    protected Set<String> nameSet = new HashSet<>()
+    protected Set<TokenStream> streamSet = new HashSet<>()
 
-    Map<String, TokenStream> tokenStreamHashMap = new HashMap<>()
-    Map<TokenStream, String> stringHashMap = new HashMap<>()
+    protected Map<String, TokenStream> nameToStreamMap = new HashMap<>()
+    protected Map<TokenStream, String> streamToNameMap = new HashMap<>()
 
-    Stack<TokenStream> tokenStreamStack = new Stack<>()
+    protected Stack<TokenStream> streamStack = new Stack<>()
 
-    public TokenStream current = null
-
-    String getCurrentStreamName()
-    {
-        stringHashMap[current]
-    }
+    protected TokenStream input = null
+    protected TokenStream originalInput = null
 
     void addInputStream(TokenStream stream, String name)
     {
-        stringHashSet << name
-        tokenStreamHashSet << stream
+        nameSet << name
+        streamSet << stream
 
-        tokenStreamHashMap[name] = stream
-        stringHashMap[stream] = name
+        nameToStreamMap[name] = stream
+        streamToNameMap[stream] = name
 
-        current = stream
+        if (!input) selectRoot(stream)
+    }
+
+    void selectRoot(TokenStream stream)
+    {
+        select(stream)
+        originalInput = null
+        streamStack.clear()
+    }
+
+    void selectRoot(String name)
+    {
+        select(name)
+        originalInput = null
+        streamStack.clear()
+    }
+
+    void select(TokenStream stream)
+    {
+        if (!streamSet.contains(stream))
+        {
+            throw new IllegalArgumentException('Stream not registered')
+        }
+        if (!originalInput)
+        {
+            originalInput = input
+        }
+        input = stream
+    }
+
+    void select(String name)
+    {
+        if (!nameSet.contains(name))
+        {
+            throw new IllegalArgumentException("No named stream '$name' registered")
+        }
+        if (!originalInput)
+        {
+            originalInput = input
+        }
+        input = nameToStreamMap[name]
+    }
+
+    void select()
+    {
+        if (!originalInput) throw new IllegalStateException('No previous stream selected')
+        input = originalInput
+        originalInput = null
     }
 
     void pop()
     {
-        if (tokenStreamStack.size() > 0)
-            current = tokenStreamStack.pop()
+        if (streamStack.size() > 0)
+            input = streamStack.pop()
     }
 
     void push(TokenStream stream)
     {
-        tokenStreamStack.push(current)
+        if (!input) throw new IllegalStateException('No streams registered')
+        streamStack.push(input)
         select(stream)
     }
 
     void push(String name)
     {
-        tokenStreamStack.push(current)
+        if (!input) throw new IllegalStateException('No streams registered')
+        streamStack.push(input)
         select(name)
     }
 
-    void select(TokenStream stream)
+    void reset()
     {
-        if (!tokenStreamHashSet.contains(stream))
-        {
-            throw new IllegalArgumentException("Given stream not registered")
-        }
-        current = stream
+        if (!input) throw new IllegalStateException('No streams registered')
+        else if (input instanceof LazyTokenStream) ((LazyTokenStream) input).reset()
+        else if (input instanceof BufferedTokenStream) ((BufferedTokenStream) input).reset()
+        else if (input instanceof UnbufferedTokenStream) ((UnbufferedTokenStream) input).reset()
+        else if (input instanceof LegacyCommonTokenStream) ((LegacyCommonTokenStream) input).reset()
+        else throw new IllegalStateException("No such method on selected named stream '$streamName' implemented")
     }
 
-    void select(String name)
+    String getStreamName()
     {
-        if (!stringHashSet.contains(name))
-        {
-            throw new IllegalArgumentException("Given stream name '$name' not registered")
-        }
-        def stream = tokenStreamHashMap[name]
-        current = stream
+        if (!input) throw new IllegalStateException('No streams registered')
+        return getStreamName(input)
     }
 
-    void undoSelect()
+    String getStreamName(TokenStream stream)
     {
-        current = tokenStreamStack.peek()
+        if (!streamSet.contains(stream)) throw new IllegalArgumentException('Stream not registered')
+        return streamToNameMap[stream]
     }
 
-    Token LT(int k) {
-        current.LT(k)
+    TokenStream getStream()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input
     }
 
-    int range() {
-        current.range()
+    TokenStream getStream(String name)
+    {
+        if (!nameSet.contains(name)) throw new IllegalArgumentException("No named stream '$name' registered")
+        return nameToStreamMap[name]
     }
 
-    Token get(int i) {
-        current.get(i)
+    Token LT(int k)
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.LT(k)
     }
 
-    TokenSource getTokenSource() {
-        current.getTokenSource()
+    int range()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.range()
     }
 
-    String toString(int start, int stop) {
-        current.toString(start, stop)
+    Token get(int i)
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        input.get(i)
     }
 
-    String toString(Token start, Token stop) {
-        current.toString(start, stop)
+    TokenSource getTokenSource()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.getTokenSource()
     }
 
-    void consume() {
-        current.consume()
+    String toString(int start, int stop)
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.toString(start, stop)
     }
 
-    int LA(int i) {
-        current.LA(i)
+    String toString(Token start, Token stop)
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.toString(start, stop)
     }
 
-    int mark() {
-        current.mark()
+    void consume()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        input.consume()
     }
 
-    int index() {
-        current.index()
+    int LA(int i)
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.LA(i)
     }
 
-    void rewind(int marker) {
-        current.rewind(marker)
+    int mark()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.mark()
     }
 
-    void rewind() {
-        current.rewind()
+    int index()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.index()
     }
 
-    void release(int marker) {
-         current.release(marker)
+    void rewind(int marker)
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        input.rewind(marker)
     }
 
-    void seek(int index) {
-        current.seek(index)
+    void rewind()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        input.rewind()
     }
 
-    int size() {
-        current.size()
+    void release(int marker)
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        input.release(marker)
     }
 
-    String getSourceName() {
-        current.getSourceName()
+    void seek(int index)
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        input.seek(index)
+    }
+
+    int size()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.size()
+    }
+
+    String getSourceName()
+    {
+        if (!input) throw new IllegalStateException('No streams registered')
+        return input.getSourceName()
     }
 }
 

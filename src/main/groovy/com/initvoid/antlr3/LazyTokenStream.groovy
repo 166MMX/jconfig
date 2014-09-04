@@ -34,10 +34,10 @@ class LazyTokenStream implements TokenStream
     void reset ()
     {
         tokenList.clear()
-        pointer = -1
+
         lastMarker = -1
+        pointer = -1
         range = -1
-        fetchedEOF = false
     }
 
     String toString(int start, int stop)
@@ -54,6 +54,7 @@ class LazyTokenStream implements TokenStream
     {
         if (pointer == -1) setup()
         if (fetchedEOF && pointer == lastIndex) return
+
         pointer++
     }
 
@@ -70,12 +71,14 @@ class LazyTokenStream implements TokenStream
     int index()
     {
         if (pointer == -1) setup()
+
         return pointer
     }
 
     int mark()
     {
         if (pointer == -1) setup()
+
         lastMarker = pointer
         return lastMarker
     }
@@ -93,6 +96,7 @@ class LazyTokenStream implements TokenStream
     void rewind()
     {
         if (lastMarker == -1) throw new IllegalStateException('mark() must be called at least once before calling rewind()')
+
         seek(lastMarker)
     }
 
@@ -100,6 +104,7 @@ class LazyTokenStream implements TokenStream
     {
         if (index < 0) pointer = 0
         if (fetchedEOF && index > lastIndex) pointer = lastIndex
+
         pointer = index
     }
 
@@ -107,8 +112,10 @@ class LazyTokenStream implements TokenStream
     {
         if (pointer == -1) setup()
         if (k == 0) return null
+
         int index = pointer - k
         if (index < 0) return null
+
         Token token = get(index)
         return token
     }
@@ -118,8 +125,10 @@ class LazyTokenStream implements TokenStream
         if (pointer == -1) setup()
         if (k == 0) return null
         if (k < 0) return LB(-k)
+
         int index = pointer + k - 1
         if (fetchedEOF && index > lastIndex) return null
+
         Token token = get(index)
         if (token.tokenIndex > range) range = token.tokenIndex
         return token
@@ -128,14 +137,16 @@ class LazyTokenStream implements TokenStream
     int LA(int k)
     {
         if (k == 0) throw new IllegalArgumentException("k must be greater or lesser then 0 but not equal 0")
+
         Token token = LT(k)
         if (!token) throw new NoSuchElementException("relative position $k to current index pointer $pointer is out of range 0..$lastIndex")
+
         return token.type
     }
 
     Token get(int index)
     {
-        Token token = null
+        Token token
 
         if (index < 0)
         {
@@ -149,17 +160,13 @@ class LazyTokenStream implements TokenStream
         {
             token = tokenList[-1]
         }
-
-        if (!token)
+        else if (sync(index))
         {
-            if (sync(index))
-            {
-                token = tokenList[index]
-            }
-            else
-            {
-                token = tokenList[-1]
-            }
+            token = tokenList[index]
+        }
+        else
+        {
+            token = tokenList[-1]
         }
 
         return token
@@ -198,6 +205,7 @@ class LazyTokenStream implements TokenStream
     void setTokenSource(TokenSource tokenSource)
     {
         this.tokenSource = tokenSource
+        fetchedEOF = false
         reset()
     }
 

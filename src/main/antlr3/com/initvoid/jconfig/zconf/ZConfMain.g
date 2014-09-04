@@ -8,8 +8,7 @@ options {
 @lexer::header  { package com.initvoid.jconfig.zconf; }
 @parser::header { package com.initvoid.jconfig.zconf;
 
-import com.initvoid.antlr3.LazyTokenStream;
-import com.initvoid.jconfig.zconf.Input;
+import com.initvoid.antlr3.TokenStreamSelector;
 import com.initvoid.jconfig.zconf.expr.model.Expression;
 import com.initvoid.jconfig.zconf.expr.model.ExpressionImpl;
 import com.initvoid.jconfig.zconf.expr.model.Symbol;
@@ -390,14 +389,15 @@ help
     returns                                     [ HelpProperty result ]
     :   start=help_start                        { result = $start.result; }
                                                 {
-                                                    ((TokenStreamSelector)input).push("help");
-                                                    ((LazyTokenStream) ((TokenStreamSelector) input).current).reset();
+                                                    TokenStreamSelector selector = (TokenStreamSelector) input;
+                                                    selector.push("help");
+                                                    selector.reset();
 
                                                     ZConfHelpParser helpParser = new ZConfHelpParser(input, state);
                                                     StringBuilder helpTextBuilder = helpParser.input();
                                                     result.setText(helpTextBuilder.toString());
 
-                                                    ((TokenStreamSelector)input).pop();
+                                                    selector.pop();
                                                 }
     ;
     
