@@ -2,12 +2,17 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.net.SocketAppender
-import com.initvoid.jconfig.PreProcessor
+import com.initvoid.antlr3.LazyFilterTokenStream
+import com.initvoid.antlr3.LazyTokenStream
 import com.initvoid.jconfig.zconf.Input
-import com.initvoid.jconfig.zconf.ZConfLexer
-import com.initvoid.jconfig.zconf.ZConfParser
+import com.initvoid.jconfig.zconf.TokenStreamSelector
+import com.initvoid.jconfig.zconf.ZConfHelpLexer
+import com.initvoid.jconfig.zconf.ZConfMainLexer
+import com.initvoid.jconfig.zconf.ZConfMainParser
 import org.antlr.runtime.ANTLRReaderStream
-import org.antlr.runtime.CommonTokenStream
+import org.antlr.runtime.CharStream
+import org.antlr.runtime.TokenSource
+import org.antlr.runtime.TokenStream
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 
@@ -77,32 +82,43 @@ Input test(Path path)
 
 Input test(Reader reader, String reference)
 {
-    PipedWriter pipedWriter = new PipedWriter()
-    PipedReader pipedReader = new PipedReader(pipedWriter)
-
-    PreProcessor.ThreadWorker.process(reader, pipedWriter)
-
     Input result = null
 
     MDC.put('reference', reference)
+    println "testing $reference"
 
     try
     {
-        ANTLRReaderStream antlrReaderStream = new ANTLRReaderStream(pipedReader)
+        CharStream antlrReaderStream = new ANTLRReaderStream(reader)
 
-        ZConfLexer lexer = new ZConfLexer(antlrReaderStream)
-        if (lexer.numberOfSyntaxErrors > 0)
-        {
-            println "Lexer  SyntaxErrors $lexer.numberOfSyntaxErrors"
-        }
+        TokenSource mainLexer = new ZConfMainLexer(antlrReaderStream)
+        TokenSource helpLexer = new ZConfHelpLexer(mainLexer.charStream)
 
-        CommonTokenStream tokens = new CommonTokenStream(lexer)
-        ZConfParser parser = new ZConfParser(tokens)
+        TokenStream mainTokenStream = new LazyFilterTokenStream(mainLexer)
+        TokenStream helpTokenStream = new LazyTokenStream(helpLexer)
+
+        TokenStreamSelector streamSelector = new TokenStreamSelector()
+        streamSelector.addInputStream(mainTokenStream, 'main')
+        streamSelector.addInputStream(helpTokenStream, 'help')
+        streamSelector.select('main')
+
+        ZConfMainParser parser = new ZConfMainParser(streamSelector)
 
         result = parser.input()
+
+        if (mainLexer.numberOfSyntaxErrors > 0)
+        {
+            println "Main Lexer  SyntaxErrors $mainLexer.numberOfSyntaxErrors"
+        }
+
+        if (helpLexer.numberOfSyntaxErrors > 0)
+        {
+            println "Help Lexer  SyntaxErrors $helpLexer.numberOfSyntaxErrors"
+        }
+
         if (parser.numberOfSyntaxErrors > 0)
         {
-            println "Parser SyntaxErrors $parser.numberOfSyntaxErrors"
+            println "     Parser SyntaxErrors $parser.numberOfSyntaxErrors"
         }
     }
     finally
