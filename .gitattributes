@@ -1,0 +1,32 @@
+.gitattributes  text
+.gitignore      text
+
+gradlew         text  eol=lf
+*.bat           text  eol=crlf
+*.cmd           text  eol=crlf
+*.sh            text  eol=lf
+*.mk            text  eol=lf
+
+*.js     text
+*.json   text
+*.css    text
+*.scss   text
+*.scssc  text
+*.htm    text
+*.html   text
+*.php    text
+*.tpl    text
+*.xslt   text
+*.xml    text
+*.txt    text
+
+*.md        text
+*.markdown  text
+
+*.gif    binary
+*.jpeg   binary
+*.jpg    binary
+*.png    binary
+*.psd    binary
+*.pdf    binary
+*.svg    binary
