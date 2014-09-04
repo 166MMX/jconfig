@@ -3,8 +3,6 @@ package com.initvoid.antlr3
 import groovy.transform.CompileStatic
 import org.antlr.runtime.Token
 import org.antlr.runtime.TokenSource
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 @CompileStatic
 class LazyFilterTokenStream extends LazyTokenStream {
@@ -33,7 +31,7 @@ class LazyFilterTokenStream extends LazyTokenStream {
     void consume()
     {
         super.consume()
-        if (sourceEndReached && pointer >= tokenList.size()) pointer = tokenList.size() - 1
+        if (fetchedEOF && pointer >= tokenList.size()) pointer = tokenList.size() - 1
     }
 
     @Override
@@ -54,9 +52,9 @@ class LazyFilterTokenStream extends LazyTokenStream {
         if (k < 0) return LB(-k)
         if (!isTokenOnChannel(pointer)) pointer = findNextOnChannelTokenIndex(pointer)
         int index = pointer + k - 1
-        if (sourceEndReached && index >= tokenList.size()) index = tokenList.size() - 1
+        if (fetchedEOF && index >= tokenList.size()) index = tokenList.size() - 1
         index = findNextOnChannelTokenIndex(index)
-        if (index > range && !sourceEndReached) range = index
+        if (index > range && !fetchedEOF) range = index
         return get(index)
     }
 
@@ -69,7 +67,7 @@ class LazyFilterTokenStream extends LazyTokenStream {
     }
 
     protected int findNextOnChannelTokenIndex(int index) {
-        while (!(sourceEndReached && index < tokenList.size()) && !isTokenOnChannel(index)) {
+        while (!(fetchedEOF && index < tokenList.size()) && !isTokenOnChannel(index)) {
             index++
         }
         return index

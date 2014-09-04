@@ -4,29 +4,29 @@ import groovy.transform.CompileStatic
 import org.antlr.runtime.Token
 import org.antlr.runtime.TokenSource
 import org.antlr.runtime.TokenStream
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 @CompileStatic
-class LazyTokenStream implements TokenStream {
-
+class LazyTokenStream implements TokenStream
+{
     protected TokenSource tokenSource
+    protected boolean fetchedEOF = false
 
     protected List<Token> tokenList = new ArrayList<>()
 
     protected int lastMarker = -1
     protected int pointer = -1
     protected int range = -1
-    protected boolean sourceEndReached = false
 
-    LazyTokenStream() {}
+    LazyTokenStream()
+    {
+    }
 
     LazyTokenStream(TokenSource tokenSource)
     {
         setTokenSource(tokenSource)
     }
 
-    protected setup()
+    protected void setup()
     {
         pointer = 0
     }
@@ -37,106 +37,119 @@ class LazyTokenStream implements TokenStream {
         pointer = -1
         lastMarker = -1
         range = -1
-        sourceEndReached = false
+        fetchedEOF = false
     }
 
-    void setTokenSource(TokenSource tokenSource) {
-        this.tokenSource = tokenSource
-        tokenList.clear()
-        pointer = -1
-    }
-
-    TokenSource getTokenSource() {
-        return this.tokenSource
-    }
-
-    String toString(int start, int stop) {
+    String toString(int start, int stop)
+    {
         return null
     }
 
-    String toString(Token start, Token stop) {
+    String toString(Token start, Token stop)
+    {
         return null
     }
 
-    void consume() {
+    void consume()
+    {
         if (pointer == -1) setup()
+        if (fetchedEOF && pointer == lastIndex) return
         pointer++
     }
 
-    int range() {
-        return this.range
+    int size()
+    {
+        return tokenList.size()
     }
 
-    int mark() {
+    int range()
+    {
+        return range
+    }
+
+    int index()
+    {
+        if (pointer == -1) setup()
+        return pointer
+    }
+
+    int mark()
+    {
         if (pointer == -1) setup()
         lastMarker = pointer
         return lastMarker
     }
 
-    int index() {
-        if (pointer == -1) setup()
-        return pointer
+    void release(int marker)
+    {
     }
 
-    void rewind(int marker) {
+    void rewind(int marker)
+    {
+        release(marker)
         seek(marker)
     }
 
-    void rewind() {
+    void rewind()
+    {
         if (lastMarker == -1) throw new IllegalStateException('mark() must be called at least once before calling rewind()')
         seek(lastMarker)
     }
 
-    void release(int marker) {
-
-    }
-
-    void seek(int index) {
+    void seek(int index)
+    {
+        if (index < 0) pointer = 0
+        if (fetchedEOF && index > lastIndex) pointer = lastIndex
         pointer = index
     }
 
-    int size() {
-        return tokenList.size()
-    }
-
-    String getSourceName() {
-        return tokenSource.sourceName
-    }
-
-    protected Token LB(int k) {
+    protected Token LB(int k)
+    {
         if (pointer == -1) setup()
         if (k == 0) return null
         int index = pointer - k
         if (index < 0) return null
-        return get(index)
+        Token token = get(index)
+        return token
     }
 
-    Token LT(int k) {
+    Token LT(int k)
+    {
         if (pointer == -1) setup()
         if (k == 0) return null
         if (k < 0) return LB(-k)
         int index = pointer + k - 1
-        if (index > range && !sourceEndReached) range = index
-        return get(index)
+        if (fetchedEOF && index > lastIndex) return null
+        Token token = get(index)
+        if (token.tokenIndex > range) range = token.tokenIndex
+        return token
     }
 
-    int LA(int k) {
-        return LT(k).type
+    int LA(int k)
+    {
+        if (k == 0) throw new IllegalArgumentException("k must be greater or lesser then 0 but not equal 0")
+        Token token = LT(k)
+        if (!token) throw new NoSuchElementException("relative position $k to current index pointer $pointer is out of range 0..$lastIndex")
+        return token.type
     }
 
-    Token get(int index) {
+    Token get(int index)
+    {
         Token token = null
-        if ( index < 0 || sourceEndReached && index >= tokenList.size() ) {
-            throw new NoSuchElementException("token index $index out of range 0..${tokenList.size() - 1}")
+
+        if (index < 0)
+        {
+            throw new NoSuchElementException("token index $index out of range 0..$lastIndex")
         }
-        if (index < tokenList.size())
+        else if (index < tokenList.size())
         {
             token = tokenList[index]
         }
-        else if (sourceEndReached)
+        else if (fetchedEOF)
         {
             token = tokenList[-1]
         }
+
         if (!token)
         {
             if (sync(index))
@@ -148,27 +161,53 @@ class LazyTokenStream implements TokenStream {
                 token = tokenList[-1]
             }
         }
+
         return token
     }
 
-    boolean sync(int index) {
-        int amount = index - tokenList.size() + 1
+    protected boolean sync(int index)
+    {
+        int amount = index - lastIndex
         if (amount > 0 ) return fetch(amount)
         return true
     }
 
-    boolean fetch(int amount) {
+    protected boolean fetch(int amount)
+    {
         int fetched = 0
-        for (int i = 1; i <= amount; i++) {
+        for (int i = 0; i < amount; i++)
+        {
             Token token = tokenSource.nextToken()
             token.setTokenIndex(tokenList.size())
             tokenList.add(token)
             fetched++
-            if (token.type == Token.EOF) {
-                sourceEndReached = true
+            if (token.type == Token.EOF)
+            {
+                fetchedEOF = true
                 break
             }
         }
         return amount == fetched
+    }
+
+    protected int getLastIndex()
+    {
+        return tokenList.size() - 1
+    }
+
+    void setTokenSource(TokenSource tokenSource)
+    {
+        this.tokenSource = tokenSource
+        reset()
+    }
+
+    TokenSource getTokenSource()
+    {
+        return this.tokenSource
+    }
+
+    String getSourceName()
+    {
+        return tokenSource.sourceName
     }
 }
