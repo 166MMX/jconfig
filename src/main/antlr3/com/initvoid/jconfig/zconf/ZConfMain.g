@@ -437,7 +437,7 @@ all_no_config_y_option_param
 prompt_value
     returns                                     [ String result ]
     :   T_WORD                                  { result = $T_WORD.text; }
-    |   T_WORD_QUOTE                            { result = getQuotedStringValue($T_WORD_QUOTE.text); }
+    |   T_WORD_QUOTE                            { result = parseJavaString($T_WORD_QUOTE.text); }
     ;
 
 // ================================================================
@@ -490,7 +490,7 @@ list_expr
 symbol
     returns                                     [ Symbol result ]
     :    T_WORD                                 { result = new Symbol($T_WORD.text); }
-    |    T_WORD_QUOTE                           { result = new Symbol(getQuotedStringValue($T_WORD_QUOTE.text)); }
+    |    T_WORD_QUOTE                           { result = new Symbol(parseJavaString($T_WORD_QUOTE.text)); }
     ;
 
 
