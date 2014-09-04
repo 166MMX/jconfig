@@ -21,7 +21,7 @@ abstract class Lexer extends org.antlr.runtime.Lexer
         super(input, state)
     }
 
-    protected static final Logger logger = LoggerFactory.getLogger(ZConfLexer.class)
+    protected static final Logger logger = LoggerFactory.getLogger(Lexer.class)
 
     @Override public void displayRecognitionError(String[] tokenNames, RecognitionException ex)
     {

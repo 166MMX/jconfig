@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 @CompileStatic
 abstract class Parser extends org.antlr.runtime.Parser
 {
-    protected static final Logger logger = LoggerFactory.getLogger(ZConfParser.class)
+    protected static final Logger logger = LoggerFactory.getLogger(Parser.class)
 
     Parser(TokenStream input) {
         super(input)
