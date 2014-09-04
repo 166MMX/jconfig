@@ -1,4 +1,4 @@
-package com.initvoid.jconfig.zconf
+package com.initvoid.antlr3
 
 import groovy.transform.CompileStatic
 import org.antlr.runtime.Token

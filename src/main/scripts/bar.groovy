@@ -5,7 +5,7 @@ import ch.qos.logback.classic.net.SocketAppender
 import com.initvoid.antlr3.LazyFilterTokenStream
 import com.initvoid.antlr3.LazyTokenStream
 import com.initvoid.jconfig.zconf.Input
-import com.initvoid.jconfig.zconf.TokenStreamSelector
+import com.initvoid.antlr3.TokenStreamSelector
 import com.initvoid.jconfig.zconf.ZConfHelpLexer
 import com.initvoid.jconfig.zconf.ZConfMainLexer
 import com.initvoid.jconfig.zconf.ZConfMainParser
