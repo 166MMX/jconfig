@@ -20,13 +20,13 @@ task distributeGrammarSourceOutput << {
 }
 
 task generateGrammarSource(type: JavaExec) {
-    def languageName = 'antlr'
+    def targetLanguageLanguageName = 'java'
     def sourceSetName = 'main'
-    def inputTree = fileTree("$project.projectDir/src/$sourceSetName/$languageName")
-    def outputDir = file("$project.buildDir/generated-src/$languageName/$sourceSetName")
-
     def glob = '**/*.g'
     def debug = false
+
+    def inputTree = fileTree("$project.projectDir/src/$sourceSetName/antlr3")
+    def outputDir = file("$project.buildDir/generated-src/$sourceSetName/$targetLanguageLanguageName/")
 
     inputTree.include glob
     mkdir(outputDir)
@@ -47,7 +47,7 @@ task generateGrammarSource(type: JavaExec) {
     inputTree.files.each { file ->
         def grammarFile = inputTree.dir.toPath().relativize(file.toPath())
         def grammarPrefix = grammarFile.fileName.toString()[0..-3]
-        ['Lexer.java', 'Parser.java', '.tokens'].each { suffix ->
+        ['Lexer.java', 'Parser.java', '.java', '.tokens'].each { suffix ->
             distributeGrammarSourceOutput.inputs.file "$outputDir/$grammarPrefix$suffix"
             distributeGrammarSourceOutput.outputs.file "$outputDir/$grammarFile.parent/$grammarPrefix$suffix"
         }
@@ -55,13 +55,13 @@ task generateGrammarSource(type: JavaExec) {
 }
 
 task generateTestGrammarSource(type: JavaExec) {
-    def languageName = 'antlr'
+    def targetLanguageLanguageName = 'java'
     def sourceSetName = 'test'
-    def inputTree = fileTree("$project.projectDir/src/$sourceSetName/$languageName")
-    def outputDir = file("$project.buildDir/generated-src/$languageName/$sourceSetName")
-
     def glob = '**/*.g'
     def debug = false
+
+    def inputTree = fileTree("$project.projectDir/src/$sourceSetName/antlr3")
+    def outputDir = file("$project.buildDir/generated-src/$sourceSetName/$targetLanguageLanguageName/")
 
     inputTree.include glob
     mkdir(outputDir)
@@ -82,7 +82,7 @@ task generateTestGrammarSource(type: JavaExec) {
     inputTree.files.each { file ->
         def grammarFile = inputTree.dir.toPath().relativize(file.toPath())
         def grammarPrefix = grammarFile.fileName.toString()[0..-3]
-        ['Lexer.java', 'Parser.java', '.tokens'].each { suffix ->
+        ['Lexer.java', 'Parser.java', '.java', '.tokens'].each { suffix ->
             distributeGrammarSourceOutput.inputs.file "$outputDir/$grammarPrefix$suffix"
             distributeGrammarSourceOutput.outputs.file "$outputDir/$grammarFile.parent/$grammarPrefix$suffix"
         }
