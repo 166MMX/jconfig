@@ -14,39 +14,41 @@ abstract class Parser extends org.antlr.runtime.Parser
 {
     protected static final Logger logger = LoggerFactory.getLogger(Parser.class)
 
-    Parser(TokenStream input) {
+    Parser(TokenStream input)
+    {
         super(input)
     }
 
-    Parser(TokenStream input, RecognizerSharedState state) {
+    Parser(TokenStream input, RecognizerSharedState state)
+    {
         super(input, state)
     }
 
-    @Override public void displayRecognitionError(String[] tokenNames, RecognitionException ex)
+    @Override void displayRecognitionError(String[] tokenNames, RecognitionException ex)
     {
         String hdr = getErrorHeader(ex)
         String msg = getErrorMessage(ex, tokenNames)
-        if (logger.isErrorEnabled()) logger.error("Selected stream:{} $hdr $msg", (input as TokenStreamSelector).streamName, ex)
+
+        if (logger.isErrorEnabled())
+        {
+            if (input instanceof TokenStreamSelector)
+            {
+                logger.error("Selected stream:{} $hdr $msg", (input as TokenStreamSelector).streamName, ex)
+            }
+            else
+            {
+                logger.error("$hdr $msg", ex)
+            }
+        }
     }
 
     protected static String parseJavaString(String value)
     {
-        if (value == null)
-        {
-            return null
-        }
+        if (value == null) return null
+
         value = value[1..-2]
         value = StringEscapeUtils.unescapeJava(value)
-        return value
-    }
 
-    protected static String stripHelpTextDelimiters(String value)
-    {
-        if (value == null)
-        {
-            return null
-        }
-        value = value[1..-2]
         return value
     }
 }
