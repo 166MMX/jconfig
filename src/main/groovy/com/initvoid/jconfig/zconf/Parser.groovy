@@ -1,5 +1,6 @@
 package com.initvoid.jconfig.zconf
 
+import com.initvoid.antlr3.TokenStreamSelector
 import groovy.transform.CompileStatic
 import org.antlr.runtime.RecognitionException
 import org.antlr.runtime.RecognizerSharedState
@@ -25,7 +26,7 @@ abstract class Parser extends org.antlr.runtime.Parser
     {
         String hdr = getErrorHeader(ex)
         String msg = getErrorMessage(ex, tokenNames)
-        if (logger.isErrorEnabled()) logger.error("$hdr $msg", ex)
+        if (logger.isErrorEnabled()) logger.error("Selected stream:{} $hdr $msg", (input as TokenStreamSelector).streamName, ex)
     }
 
     protected static String parseJavaString(String value)
