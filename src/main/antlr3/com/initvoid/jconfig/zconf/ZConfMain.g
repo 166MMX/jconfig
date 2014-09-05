@@ -407,7 +407,7 @@ help_start
         T_EOL
     ;
 
-option_param_list
+option_param_list                               // TODO finish implementation
     returns                                     [ List result ]
     :                                           { result = new LinkedList(); }
     (                                    options{ greedy = true; }:
@@ -527,7 +527,7 @@ T_ENDCHOICE             : 'endchoice'       ;
 T_COMMENT               : 'comment'         ;
 T_CONFIG                : 'config'          ;
 T_MENUCONFIG            : 'menuconfig'      ;
-T_HELP                  : 'help' | '---help---'            ;
+T_HELP                  : 'help' | '---help---'            ;  // TODO get rid of of --- in first place
 T_IF                    : 'if'              ;
 T_ENDIF                 : 'endif'           ;
 T_DEPENDS               : 'depends'         ;
