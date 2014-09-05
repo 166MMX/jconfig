@@ -1,4 +1,4 @@
 jconfig
 =======
 
-jconfig, a JavaFX tool, to can configure the Linux kernel source
+jconfig, a JavaFX tool, to configure the Linux kernel source
