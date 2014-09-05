@@ -10,23 +10,28 @@ import org.slf4j.LoggerFactory
 @CompileStatic
 abstract class Lexer extends org.antlr.runtime.Lexer
 {
-    Lexer() {
+    protected static final Logger logger = LoggerFactory.getLogger(Lexer.class)
+
+    Lexer()
+    {
     }
 
-    Lexer(CharStream input) {
+    Lexer(CharStream input)
+    {
         super(input)
     }
 
-    Lexer(CharStream input, RecognizerSharedState state) {
+    Lexer(CharStream input, RecognizerSharedState state)
+    {
         super(input, state)
     }
 
-    protected static final Logger logger = LoggerFactory.getLogger(Lexer.class)
-
-    @Override public void displayRecognitionError(String[] tokenNames, RecognitionException ex)
+    @Override
+    void displayRecognitionError(String[] tokenNames, RecognitionException ex)
     {
         String hdr = getErrorHeader(ex)
         String msg = getErrorMessage(ex, tokenNames)
-        if (logger.isErrorEnabled()) logger.error(hdr + " " + msg, ex)
+
+        if (logger.isErrorEnabled()) logger.error("$hdr $msg", ex)
     }
 }

@@ -24,7 +24,8 @@ abstract class Parser extends org.antlr.runtime.Parser
         super(input, state)
     }
 
-    @Override void displayRecognitionError(String[] tokenNames, RecognitionException ex)
+    @Override
+    void displayRecognitionError(String[] tokenNames, RecognitionException ex)
     {
         String hdr = getErrorHeader(ex)
         String msg = getErrorMessage(ex, tokenNames)
