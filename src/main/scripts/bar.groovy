@@ -9,10 +9,14 @@ import com.initvoid.antlr3.TokenStreamSelector
 import com.initvoid.jconfig.zconf.ZConfHelpLexer
 import com.initvoid.jconfig.zconf.ZConfMainLexer
 import com.initvoid.jconfig.zconf.ZConfMainParser
+import com.initvoid.jconfig.zconf.ZConfWalker
+import com.initvoid.jconfig.zconf.statement.Statement
 import org.antlr.runtime.ANTLRReaderStream
 import org.antlr.runtime.CharStream
+import org.antlr.runtime.ParserRuleReturnScope
 import org.antlr.runtime.TokenSource
 import org.antlr.runtime.TokenStream
+import org.antlr.runtime.tree.CommonTreeNodeStream
 import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 
@@ -90,35 +94,24 @@ Input test(Reader reader, String reference)
     try
     {
         CharStream antlrReaderStream = new ANTLRReaderStream(reader)
+        TokenSource lexer = new ZConfMainLexer(antlrReaderStream)
 
-        TokenSource mainLexer = new ZConfMainLexer(antlrReaderStream)
-        TokenSource helpLexer = new ZConfHelpLexer(mainLexer.charStream)
+        TokenStream tokenStream = new LazyFilterTokenStream(lexer)
+        ZConfMainParser parser = new ZConfMainParser(tokenStream)
+        ParserRuleReturnScope inputReturn = parser.input()
 
-        TokenStream mainTokenStream = new LazyFilterTokenStream(mainLexer)
-        TokenStream helpTokenStream = new LazyTokenStream(helpLexer)
+        CommonTreeNodeStream treeNodeStream = new CommonTreeNodeStream(inputReturn)
+        ZConfWalker walker = new ZConfWalker(treeNodeStream)
+        result = walker.content()
 
-        TokenStreamSelector streamSelector = new TokenStreamSelector()
-        streamSelector.addInputStream(mainTokenStream, 'main')
-        streamSelector.addInputStream(helpTokenStream, 'help')
-        streamSelector.select('main')
-
-        ZConfMainParser parser = new ZConfMainParser(streamSelector)
-
-        result = parser.input()
-
-        if (mainLexer.numberOfSyntaxErrors > 0)
+        if (lexer.numberOfSyntaxErrors > 0)
         {
-            println "Main Lexer  SyntaxErrors $mainLexer.numberOfSyntaxErrors"
-        }
-
-        if (helpLexer.numberOfSyntaxErrors > 0)
-        {
-            println "Help Lexer  SyntaxErrors $helpLexer.numberOfSyntaxErrors"
+            println "Lexer  SyntaxErrors $lexer.numberOfSyntaxErrors"
         }
 
         if (parser.numberOfSyntaxErrors > 0)
         {
-            println "     Parser SyntaxErrors $parser.numberOfSyntaxErrors"
+            println "Parser SyntaxErrors $parser.numberOfSyntaxErrors"
         }
     }
     finally
