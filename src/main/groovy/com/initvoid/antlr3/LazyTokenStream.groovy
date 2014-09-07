@@ -23,12 +23,13 @@ class LazyTokenStream implements TokenStream
 
     LazyTokenStream(TokenSource tokenSource)
     {
-        setTokenSource(tokenSource)
+        this.tokenSource = tokenSource
     }
 
     protected void setup()
     {
         pointer = 0
+        range = 0
     }
 
     void reset ()
@@ -37,7 +38,7 @@ class LazyTokenStream implements TokenStream
 
         lastMarker = -1
         pointer = -1
-        range = -1
+        range = 0
     }
 
     String toString(int start, int stop)
@@ -52,8 +53,10 @@ class LazyTokenStream implements TokenStream
 
     void consume()
     {
-        if (pointer == -1) setup()
-        if (fetchedEOF && pointer == lastIndex) return
+        if (pointer == -1)
+            setup()
+        if (fetchedEOF && pointer == lastValidIndex)
+            return
 
         pointer++
     }
@@ -65,19 +68,24 @@ class LazyTokenStream implements TokenStream
 
     int range()
     {
+        if (pointer == -1)
+            setup()
+
         return range
     }
 
     int index()
     {
-        if (pointer == -1) setup()
+        if (pointer == -1)
+            setup()
 
         return pointer
     }
 
     int mark()
     {
-        if (pointer == -1) setup()
+        if (pointer == -1)
+            setup()
 
         lastMarker = pointer
         return lastMarker
@@ -89,32 +97,42 @@ class LazyTokenStream implements TokenStream
 
     void rewind(int marker)
     {
+        if (marker < 0)
+            throw new IllegalArgumentException('marker must be greater then 0')
         release(marker)
         seek(marker)
     }
 
     void rewind()
     {
-        if (lastMarker == -1) throw new IllegalStateException('mark() must be called at least once before calling rewind()')
+        if (lastMarker == -1)
+            throw new IllegalStateException('mark() must be called at least once before calling rewind()')
 
         seek(lastMarker)
     }
 
     void seek(int index)
     {
-        if (index < 0) pointer = 0
-        if (fetchedEOF && index > lastIndex) pointer = lastIndex
-
-        pointer = index
+        if (index < 0)
+            pointer = 0
+        else if (fetchedEOF && index > lastValidIndex)
+            pointer = lastValidIndex
+        else
+            pointer = index
     }
 
     protected Token LB(int k)
     {
-        if (pointer == -1) setup()
-        if (k == 0) return null
+        if (pointer == -1)
+            setup()
+        if (k == 0)
+            return null
+        if (k < 0)
+            return LT(-k)
 
         int index = pointer - k
-        if (index < 0) return null
+        if (index < 0)
+            return null
 
         Token token = get(index)
         return token
@@ -122,24 +140,29 @@ class LazyTokenStream implements TokenStream
 
     Token LT(int k)
     {
-        if (pointer == -1) setup()
-        if (k == 0) return null
-        if (k < 0) return LB(-k)
+        if (pointer == -1)
+            setup()
+        if (k == 0)
+            return null
+        if (k < 0)
+            return LB(-k)
 
         int index = pointer + k - 1
-        if (fetchedEOF && index > lastIndex) return null
 
         Token token = get(index)
-        if (token.tokenIndex > range) range = token.tokenIndex
+        if (token.tokenIndex > range)
+            range = token.tokenIndex
         return token
     }
 
     int LA(int k)
     {
-        if (k == 0) throw new IllegalArgumentException("k must be greater or lesser then 0 but not equal 0")
+        if (k == 0)
+            throw new IllegalArgumentException("k must be greater or lesser then but not equal 0")
 
         Token token = LT(k)
-        if (!token) throw new NoSuchElementException("relative position $k to current index pointer $pointer is out of range 0..$lastIndex")
+        if (!token)
+            return Token.EOF
 
         return token.type
     }
@@ -149,55 +172,54 @@ class LazyTokenStream implements TokenStream
         Token token
 
         if (index < 0)
-        {
-            throw new NoSuchElementException("token index $index out of range 0..$lastIndex")
-        }
+            throw new NoSuchElementException("token index $index is out of range 0..$lastValidIndex")
         else if (index < tokenList.size())
-        {
             token = tokenList[index]
-        }
         else if (fetchedEOF)
-        {
             token = tokenList[-1]
-        }
         else if (sync(index))
-        {
             token = tokenList[index]
-        }
         else
-        {
             token = tokenList[-1]
-        }
 
         return token
     }
 
     protected boolean sync(int index)
     {
-        int amount = index - lastIndex
-        if (amount > 0 ) return fetch(amount)
-        return true
+        boolean fullySynced
+
+        int amount = index - lastValidIndex
+        if (amount > 0 )
+            fullySynced = fetch(amount)
+        else
+            fullySynced = true
+
+        return fullySynced
     }
 
     protected boolean fetch(int amount)
     {
-        int fetched = 0
-        for (int i = 0; i < amount; i++)
+        boolean fullyFetched
+
+        while (amount > 0)
         {
             Token token = tokenSource.nextToken()
             token.setTokenIndex(tokenList.size())
             tokenList.add(token)
-            fetched++
+            amount--
             if (token.type == Token.EOF)
             {
                 fetchedEOF = true
                 break
             }
         }
-        return amount == fetched
+        fullyFetched = amount == 0
+
+        return fullyFetched
     }
 
-    protected int getLastIndex()
+    protected int getLastValidIndex()
     {
         return tokenList.size() - 1
     }

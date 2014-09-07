@@ -32,13 +32,19 @@ class LazyFilterTokenStream extends LazyTokenStream
     @Override
     protected Token LB(int k)
     {
-        if (pointer == -1) setup()
-        if (k == 0) return null
+        if (pointer == -1)
+            setup()
+        if (k == 0)
+            return null
+        if (k < 0)
+            return LT(-k)
 
-        if (!isTokenOnChannel(pointer)) pointer = findPreviousOnChannelTokenIndex(pointer)
+        if (!isTokenOnChannel(pointer))
+            pointer = findPreviousOnChannelTokenIndex(pointer)
         int index = pointer - k
-        if (index < 0) return null
         index = findPreviousOnChannelTokenIndex(index)
+        if (index < 0)
+            return null
 
         Token token = get(index)
         return token
@@ -47,17 +53,21 @@ class LazyFilterTokenStream extends LazyTokenStream
     @Override
     Token LT(int k)
     {
-        if (pointer == -1) setup()
-        if (k == 0) return null
-        if (k < 0) return LB(-k)
+        if (pointer == -1)
+            setup()
+        if (k == 0)
+            return null
+        if (k < 0)
+            return LB(-k)
 
-        if (!isTokenOnChannel(pointer)) pointer = findNextOnChannelTokenIndex(pointer)
+        if (!isTokenOnChannel(pointer))
+            pointer = findNextOnChannelTokenIndex(pointer)
         int index = pointer + k - 1
-        if (fetchedEOF && index > lastIndex) return null
         index = findNextOnChannelTokenIndex(index)
 
         Token token = get(index)
-        if (token.tokenIndex > range) range = token.tokenIndex
+        if (token.tokenIndex > range)
+            range = token.tokenIndex
         return token
     }
 
@@ -73,7 +83,7 @@ class LazyFilterTokenStream extends LazyTokenStream
 
     protected int findNextOnChannelTokenIndex(int index)
     {
-        while (!(fetchedEOF && index <= lastIndex) && !isTokenOnChannel(index))
+        while (!(fetchedEOF && index <= lastValidIndex) && !isTokenOnChannel(index))
         {
             index++
         }
