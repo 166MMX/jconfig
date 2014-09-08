@@ -12,11 +12,11 @@ tokens {
     V_EXPRESSION;
     V_WORD;
     V_HELP_TEXT;
+    V_IF_FRAG;
 }
 
 @lexer::header  {package com.initvoid.jconfig.zconf;}
-@parser::header {package com.initvoid.jconfig.zconf;
-import org.apache.commons.lang3.StringEscapeUtils;}
+@parser::header {package com.initvoid.jconfig.zconf;}
 
 @parser::members {
     protected static String parseJavaString(String value)
@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringEscapeUtils;}
         if (value == null) return null;
 
         value = value.substring(1, value.length() - 1);
-        value = StringEscapeUtils.unescapeJava(value);
+        value = org.apache.commons.lang3.StringEscapeUtils.unescapeJava(value);
 
         return value;
     }
@@ -37,84 +37,52 @@ input
     (                                    options{ greedy = true; }:
         T_EOL
     )*
-        stmt_list=input_sub_stmt_list
-    -> ^(V_STATEMENT_LIST $stmt_list)
+        input_sub_stmt_list?
     ;
 
 // ================================================================================================
 
 config_stmt
-    :   T_CONFIG      T_WORD                statement_start_eol
-        opt_list=     config_option_list
-
-    ->  ^(T_CONFIG T_WORD
-            ^(V_OPTION_LIST $opt_list)
-        )
+    :   T_CONFIG^      T_WORD               statement_start_eol!
+        config_option_list
     ;
 
 menu_config_stmt
-    :   T_MENUCONFIG  T_WORD                statement_start_eol
-        opt_list=     config_option_list
-
-    ->  ^(T_MENUCONFIG T_WORD
-            ^(V_OPTION_LIST $opt_list)
-        )
+    :   T_MENUCONFIG^  T_WORD               statement_start_eol!
+        config_option_list
     ;
 
 choice_stmt
-    :   T_CHOICE      T_WORD?               statement_start_eol
-        opt_list=     choice_option_list
-        stmt_list=    choice_sub_stmt_list
-        T_ENDCHOICE                         statement_end_eol
-
-    ->  ^(T_CHOICE T_WORD
-            ^(V_OPTION_LIST $opt_list)
-            ^(V_STATEMENT_LIST $stmt_list)
-        )
+    :   T_CHOICE^      T_WORD?              statement_start_eol!
+        choice_option_list?
+        choice_sub_stmt_list
+        T_ENDCHOICE!                        statement_end_eol!
     ;
 
 comment_stmt
-    :   T_COMMENT     prompt_value          statement_start_eol
-        opt_list=     comment_option_list
-
-    ->  ^(T_COMMENT prompt_value
-            ^(V_OPTION_LIST $opt_list)
-        )
+    :   T_COMMENT^     prompt_value         statement_start_eol!
+        comment_option_list?
     ;
 
 menu_stmt
-    :   T_MENU        prompt_value          statement_start_eol
-        opt_list=     menu_option_list
-        stmt_list=    menu_sub_stmt_list
-        T_ENDMENU                           statement_end_eol
-
-    ->  ^(T_MENU prompt_value
-            ^(V_OPTION_LIST $opt_list)?
-            ^(V_STATEMENT_LIST $stmt_list)
-        )
+    :   T_MENU^        prompt_value         statement_start_eol!
+        menu_option_list?
+        menu_sub_stmt_list
+        T_ENDMENU!                          statement_end_eol!
     ;
 
 if_stmt
-    :   T_IF          expr                  statement_start_eol
-        stmt_list=    if_sub_stmt_list
-        T_ENDIF                             statement_end_eol
-
-    ->  ^(T_IF
-            ^(V_EXPRESSION expr)
-            ^(V_STATEMENT_LIST $stmt_list)
-        )
+    :   T_IF^          expr                 statement_start_eol!
+        if_sub_stmt_list
+        T_ENDIF!                            statement_end_eol!
     ;
 
 source_stmt
-    :   T_SOURCE      prompt_value          statement_end_eol
-
-    ->  ^(T_SOURCE prompt_value)
+    :   T_SOURCE^      prompt_value         statement_end_eol!
     ;
 
 main_menu_stmt
-    :   T_MAINMENU    prompt_value          statement_end_eol
-
-    ->  ^(T_MAINMENU prompt_value)
+    :   T_MAINMENU^    prompt_value         statement_end_eol!
     ;
 
 common_stmt
@@ -129,80 +97,96 @@ common_stmt
 
 config_option_list
     :
-    (                                    options{ greedy = true; }:
-        config_option
-    |   symbol_option
-    |   depends
-    |   help
-    |   T_EOL!
-    )*
+    (                                   options{ greedy = true; }:
+        item=config_option
+    |   item=symbol_option
+    |   item=depends
+    |   item=help
+    |   T_EOL
+    )+
+
+    ->  ^(V_OPTION_LIST $item+)
     ;
 
 choice_option_list
     :
-    (                                    options{ greedy = true; }:
-        choice_option
-    |   depends
-    |   help
-    |   T_EOL!
-    )*
+    (                                   options{ greedy = true; }:
+        item=choice_option
+    |   item=depends
+    |   item=help
+    |   T_EOL
+    )+
+
+    ->  ^(V_OPTION_LIST $item+)
     ;
 
 comment_option_list
     :
-    (                                    options{ greedy = true; }:
-        depends
-    |   T_EOL!
-    )*
+    (                                   options{ greedy = true; }:
+        item=depends
+    |   T_EOL
+    )+
+
+    ->  ^(V_OPTION_LIST $item+)
     ;
 
 menu_option_list
     :
-    (                                    options{ greedy = true; }:
-        visible
-    |   depends
-    |   T_EOL!
-    )*
+    (                                   options{ greedy = true; }:
+        item=visible
+    |   item=depends
+    |   T_EOL
+    )+
+
+    ->  ^(V_OPTION_LIST $item+)
     ;
 
 // ================================================================================================
 
 input_sub_stmt_list
-    :   main_menu_stmt?
+    :   item=main_menu_stmt?
     (                                    options{ greedy = true; }:
-        common_stmt
-    |   choice_stmt
-    |   menu_stmt
-    |   T_EOL!
-    )*
+        item=common_stmt
+    |   item=choice_stmt
+    |   item=menu_stmt
+    |   T_EOL
+    )+
+
+    ->  ^(V_STATEMENT_LIST $item+)
     ;
 
 choice_sub_stmt_list
     :
     (                                    options{ greedy = true; }:
-        common_stmt
-    |   T_EOL!
-    )*
+        item=common_stmt
+    |   T_EOL
+    )+
+
+    ->  ^(V_STATEMENT_LIST $item+)
     ;
 
 menu_sub_stmt_list
     :
     (                                    options{ greedy = true; }:
-        common_stmt
-    |   menu_stmt
-    |   choice_stmt
-    |   T_EOL!
-    )*
+        item=common_stmt
+    |   item=menu_stmt
+    |   item=choice_stmt
+    |   T_EOL
+    )+
+
+    ->  ^(V_STATEMENT_LIST $item+)
     ;
 
 if_sub_stmt_list
     :
     (                                    options{ greedy = true; }:
-        common_stmt
-    |   menu_stmt
-    |   choice_stmt
-    |   T_EOL!
-    )*
+        item=common_stmt
+    |   item=menu_stmt
+    |   item=choice_stmt
+    |   T_EOL
+    )+
+
+    ->  ^(V_STATEMENT_LIST $item+)
     ;
 
 // ================================================================================================
@@ -248,13 +232,12 @@ prompt_option
 
 default_config_option
     :
-    t=( T_DEFAULT
+    (   T_DEFAULT
     |   T_DEFAULT_BOOL
     |   T_DEFAULT_TRISTATE
-    ) 	expr
-        if_frag=option_if_frag?
-        option_eol
-    ->  ^($t ^(V_EXPRESSION expr) $if_frag?)
+    )^ 	expr
+        option_if_frag?
+        option_eol!
     ;
 
 default_choice_option
@@ -294,10 +277,9 @@ optional_option
     ;
 
 depends
-    :   T_DEPENDS_ON
+    :   T_DEPENDS_ON^
         expr
-        option_eol
-    ->  ^(T_DEPENDS_ON ^(V_EXPRESSION expr))
+        option_eol!
     ;
 
 visible
@@ -307,17 +289,34 @@ visible
     ;
 
 help
-	@init {StringBuilder helpTextBuilder;}
-    :   T_HELP
-        { helpTextBuilder = new ZConfHelpParser(new CommonTokenStream(new ZConfHelpLexer(((Lexer)getTokenStream().getTokenSource()).getCharStream(), state))).input(); }
-        option_eol
-    ->  ^(T_HELP V_HELP_TEXT[helpTextBuilder.toString()])
+    :   T_HELP^
+        help_content
+        option_eol!
+    ;
+
+help_content
+	@init
+	    {
+	        StringBuilder      helpTextBuilder  =  null;
+        }
+    :   {
+            TokenStream        thisTokenStream  =  getTokenStream();
+            Lexer              thisLexer        =  (Lexer) thisTokenStream.getTokenSource();
+            CharStream         charStream       =  thisLexer.getCharStream();
+            ZConfHelpLexer     tokenSource      =  new ZConfHelpLexer(charStream, state);
+            CommonTokenStream  tokenStream      =  new CommonTokenStream(tokenSource);
+            ZConfHelpParser    parser           =  new ZConfHelpParser(tokenStream);
+                               helpTextBuilder  =  parser.input();
+        }
+
+    ->  V_HELP_TEXT[helpTextBuilder.toString()]
     ;
 
 option_if_frag
     :   T_IF
         expr
-    ->  ^(T_IF ^(V_EXPRESSION expr))
+
+    -> ^(V_IF_FRAG expr)
     ;
 
 option_param_list
@@ -358,8 +357,14 @@ prompt_value
 // T_OR < T_AND < T_EQUAL, T_UNEQUAL < T_NOT < T_LPAREN
 
 expr
+    :   or_expr
+
+    ->  ^(V_EXPRESSION or_expr)
+    ;
+
+or_expr
     :            and_expr
-    (   T_OR     expr
+    (   T_OR     or_expr
     )?
     ;
 

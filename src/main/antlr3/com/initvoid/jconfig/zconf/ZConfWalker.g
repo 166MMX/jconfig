@@ -44,174 +44,207 @@ import java.util.LinkedList;}
 
 content
     returns                                     [ Input result = new Input() ]
-    :   statement_list                          { result.setStatementList($statement_list.list); }
+    :   s_list=statement_list                   { result.setStatementList($s_list.list); }
         EOF
     ;
 
 statement_list
-    returns                                     [ List<Statement> list = new LinkedList<>(); ]
+    returns                                     [ List<Statement> list = new LinkedList<>() ]
     :   V_STATEMENT_LIST
     (   options{greedy=true;}:
-        main_menu_stmt                          { list.add($main_menu_stmt.result); }
-    |   if_stmt                                 { list.add($if_stmt.result); }
-    |   comment_stmt                            { list.add($comment_stmt.result); }
-    |   config_stmt                             { list.add($config_stmt.result); }
-    |   menu_config_stmt                        { list.add($menu_config_stmt.result); }
-    |   source_stmt                             { list.add($source_stmt.result); }
-    |   choice_stmt                             { list.add($choice_stmt.result); }
-    |   menu_stmt                               { list.add($menu_stmt.result); }
-    )*
+        item=main_menu_stmt                     { list.add($item.result); }
+    |   item=if_stmt                            { list.add($item.result); }
+    |   item=comment_stmt                       { list.add($item.result); }
+    |   item=config_stmt                        { list.add($item.result); }
+    |   item=menu_config_stmt                   { list.add($item.result); }
+    |   item=source_stmt                        { list.add($item.result); }
+    |   item=choice_stmt                        { list.add($item.result); }
+    |   item=menu_stmt                          { list.add($item.result); }
+    )+
     ;
 
 option_list
-    returns                                     [ List<Property> list = new LinkedList<>(); ]
+    returns                                     [ List<Property> list = new LinkedList<>() ]
     :	V_OPTION_LIST
     (   options{greedy=true;}:
-    	type_option                             { list.add($type_option.result); }
-    |   prompt_option                           { list.add($prompt_option.result); }
-    |   select_option                           { list.add($select_option.result); }
-    |   range_option                            { list.add($range_option.result); }
-    |   default_choice_option                   { list.add($default_choice_option.result); }
-    |   default_config_option                   { list.add($default_config_option.result); }
-    |   optional_option                         { list.add($optional_option.result); }
-    |   option_option                           { list.add($option_option.result); }
-    |   depends                                 { list.add($depends.result); }
-    |   help                                    { list.add($help.result); }
-    )*
+    	item=type_option                        { list.add($item.result); }
+    |   item=prompt_option                      { list.add($item.result); }
+    |   item=select_option                      { list.add($item.result); }
+    |   item=range_option                       { list.add($item.result); }
+    |   item=default_choice_option              { list.add($item.result); }
+    |   item=default_config_option              { list.add($item.result); }
+    |   item=optional_option                    { list.add($item.result); }
+    |   item=option_option                      { list.add($item.result); }
+    |   item=depends                            { list.add($item.result); }
+    |   item=help                               { list.add($item.result); }
+    )+
     ;
 
 config_stmt
-    returns                                     [ ConfigStatement result = new ConfigStatement(); ]
-    :   T_CONFIG  V_WORD                        { result.setSymbolName($V_WORD.text); }
-        option_list                             { result.setPropertyList($option_list.list); }
+    returns                                     [ Statement result ]
+    :   T_CONFIG                                { ConfigStatement o = new ConfigStatement(); }
+        V_WORD                                  { o.setSymbolName($V_WORD.text); }
+        o_list=option_list                      { o.setPropertyList($o_list.list); }
+                                                { result = o; }
     ;
 
 menu_config_stmt
-    returns                                     [ MenuConfigStatement result = new MenuConfigStatement(); ]
-    :   T_MENUCONFIG  V_WORD                    { result.setSymbolName($V_WORD.text); }
-        option_list                             { result.setPropertyList($option_list.list); }
+    returns                                     [ Statement result ]
+    :   T_MENUCONFIG                            { MenuConfigStatement o = new MenuConfigStatement(); }
+        V_WORD                                  { o.setSymbolName($V_WORD.text); }
+        o_list=option_list                      { o.setPropertyList($o_list.list); }
+                                                { result = o; }
     ;
 
 choice_stmt
-    returns                                     [ ChoiceStatement result = new ChoiceStatement(); ]
-    :   T_CHOICE  V_WORD?                       { result.setSymbolName($V_WORD.text); }
-        option_list                             { result.setPropertyList($option_list.list); }
-        statement_list                          { result.setStatementList($statement_list.list); }
+    returns                                     [ Statement result ]
+    :   T_CHOICE                                { ChoiceStatement o = new ChoiceStatement(); }
+        V_WORD?                                 { o.setSymbolName($V_WORD.text); }
+        o_list=option_list                      { o.setPropertyList($o_list.list); }
+        s_list=statement_list                   { o.setStatementList($s_list.list); }
+                                                { result = o; }
     ;
 
 comment_stmt
-    returns                                     [ CommentStatement result = new CommentStatement(); ]
-    :   T_COMMENT  V_WORD                       { result.setPrompt($V_WORD.text); }
-        option_list                             { result.setPropertyList($option_list.list); }
+    returns                                     [ Statement result ]
+    :   T_COMMENT                               { CommentStatement o = new CommentStatement(); }
+        V_WORD                                  { o.setPrompt($V_WORD.text); }
+        o_list=option_list                      { o.setPropertyList($o_list.list); }
+                                                { result = o; }
     ;
 
 menu_stmt
-    returns                                     [ MenuStatement result = new MenuStatement(); ]
-    :   T_MENU  V_WORD                          { result.setPrompt($V_WORD.text); }
-        option_list                             { result.setPropertyList($option_list.list); }
-        statement_list                          { result.setStatementList($statement_list.list); }
+    returns                                     [ Statement result ]
+    :   T_MENU                                  { MenuStatement o = new MenuStatement(); }
+        V_WORD                                  { o.setPrompt($V_WORD.text); }
+        o_list=option_list                      { o.setPropertyList($o_list.list); }
+        s_list=statement_list                   { o.setStatementList($s_list.list); }
+                                                { result = o; }
     ;
 
 if_stmt
-    returns                                     [ IfStatement result = new IfStatement(); ]
-    :   T_IF  expr                              { result.setCondition($expr.result); }
-        statement_list                          { result.setStatementList($statement_list.list); }
+    returns                                     [ Statement result ]
+    :   T_IF                                    { IfStatement o = new IfStatement(); }
+        e=expr                                  { o.setCondition($e.result); }
+        s_list=statement_list                   { o.setStatementList($s_list.list); }
+                                                { result = o; }
     ;
 
 source_stmt
-    returns                                     [ SourceStatement result = new SourceStatement(); ]
-    :   T_SOURCE  V_WORD                        { result.setPath($V_WORD.text); }
+    returns                                     [ Statement result ]
+    :   T_SOURCE                                { SourceStatement o = new SourceStatement(); }
+        V_WORD                                  { o.setPath($V_WORD.text); }
+                                                { result = o; }
     ;
 
 main_menu_stmt
-    returns                                     [ MainMenuStatement result = new MainMenuStatement(); ]
-    :   T_MAINMENU  V_WORD                      { result.setPrompt($V_WORD.text); }
+    returns                                     [ Statement result ]
+    :   T_MAINMENU                              { MainMenuStatement o = new MainMenuStatement(); }
+        V_WORD                                  { o.setPrompt($V_WORD.text); }
+                                                { result = o; }
     ;
 
 // ================================================================
 
 type_option
-    returns                                     [ TypeProperty result ]
-    :
-    (   T_TYPE_BOOL                             { result = new BooleanTypeProperty(); }
-    |   T_TYPE_BOOLEAN                          { result = new BooleanTypeProperty(); }
-    |   T_TYPE_TRISTATE                         { result = new TriStateTypeProperty(); }
-    |   T_TYPE_STRING                           { result = new StringTypeProperty(); }
-    |   T_TYPE_HEX                              { result = new HexTypeProperty(); }
-    |   T_TYPE_INT                              { result = new IntTypeProperty(); }
-    )   V_WORD?                                 { result.setPrompt($V_WORD.text); }
-        if_option_frag?                         { result.setCondition($if_option_frag.result); }
+    returns                                     [ Property result ]
+    :                                           { TypeProperty o = null; }
+    (   T_TYPE_BOOL                             { o = new BooleanTypeProperty(); }
+    |   T_TYPE_BOOLEAN                          { o = new BooleanTypeProperty(); }
+    |   T_TYPE_TRISTATE                         { o = new TriStateTypeProperty(); }
+    |   T_TYPE_STRING                           { o = new StringTypeProperty(); }
+    |   T_TYPE_HEX                              { o = new HexTypeProperty(); }
+    |   T_TYPE_INT                              { o = new IntTypeProperty(); }
+    )   V_WORD?                                 { o.setPrompt($V_WORD.text); }
+        c=if_option_frag?                       { o.setCondition($c.result); }
+                                                { result = o; }
     ;
 
 prompt_option
-    returns                                     [ PromptProperty result = new PromptProperty(); ]
-    :   T_PROMPT  V_WORD                        { result.setPrompt($V_WORD.text); }
-        if_option_frag?                         { result.setCondition($if_option_frag.result); }
+    returns                                     [ Property result ]
+    :   T_PROMPT                                { PromptProperty o = new PromptProperty(); }
+        V_WORD                                  { o.setPrompt($V_WORD.text); }
+        c=if_option_frag?                       { o.setCondition($c.result); }
+                                                { result = o; }
     ;
 
 default_config_option
-    returns                                     [ DefaultProperty result ]
-    :
-    (   T_DEFAULT                               { result = new DefaultProperty(); }
-    |   T_DEFAULT_BOOL                          { result = new DefaultBooleanProperty(); }
-    |   T_DEFAULT_TRISTATE                      { result = new DefaultTriStateProperty(); }
-    )	expr                                    { result.setConfigExpression($expr.result); }
-        if_option_frag?                         { result.setCondition($if_option_frag.result); }
+    returns                                     [ Property result ]
+    :                                           { DefaultProperty o = null; }
+    (   T_DEFAULT                               { o = new DefaultProperty(); }
+    |   T_DEFAULT_BOOL                          { o = new DefaultBooleanProperty(); }
+    |   T_DEFAULT_TRISTATE                      { o = new DefaultTriStateProperty(); }
+    )	e=expr                                  { o.setConfigExpression($e.result); }
+        c=if_option_frag?                       { o.setCondition($c.result); }
+                                                { result = o; }
     ;
 
 default_choice_option
-    returns                                     [ DefaultProperty result ]
-    :
-    (   T_DEFAULT                               { result = new DefaultProperty(); }
-    |   T_DEFAULT_BOOL                          { result = new DefaultBooleanProperty(); }
-    |   T_DEFAULT_TRISTATE                      { result = new DefaultTriStateProperty(); }
-    )	V_WORD                                  { result.setChoiceValue($V_WORD.text); }
-        if_option_frag?                         { result.setCondition($if_option_frag.result); }
+    returns                                     [ Property result ]
+    :                                           { DefaultProperty o = null; }
+    (   T_DEFAULT                               { o = new DefaultProperty(); }
+    |   T_DEFAULT_BOOL                          { o = new DefaultBooleanProperty(); }
+    |   T_DEFAULT_TRISTATE                      { o = new DefaultTriStateProperty(); }
+    )	V_WORD                                  { o.setChoiceValue($V_WORD.text); }
+        c=if_option_frag?                       { o.setCondition($c.result); }
+                                                { result = o; }
     ;
 
 select_option
-    returns                                     [ SelectProperty result = new SelectProperty(); ]
-    :   T_SELECT  V_WORD                        { result.setSymbol($V_WORD.text); }
-        if_option_frag?                         { result.setCondition($if_option_frag.result); }
+    returns                                     [ Property result ]
+    :   T_SELECT                                { SelectProperty o = new SelectProperty(); }
+        V_WORD                                  { o.setSymbol($V_WORD.text); }
+        c=if_option_frag?                       { o.setCondition($c.result); }
+                                                { result = o; }
     ;
 
 range_option
-    returns                                     [ RangeProperty result = new RangeProperty(); ]
-    :   T_RANGE
-        from=symbol                             { result.setFrom($from.result); }
-        to=symbol                               { result.setTo($to.result); }
-        if_option_frag?                         { result.setCondition($if_option_frag.result); }
+    returns                                     [ Property result ]
+    :   T_RANGE                                 { RangeProperty o = new RangeProperty(); }
+        from=symbol                             { o.setFrom($from.result); }
+        to=symbol                               { o.setTo($to.result); }
+        c=if_option_frag?                       { o.setCondition($c.result); }
+                                                { result = o; }
     ;
 
 option_option
-    returns                                     [ OptionProperty result = new OptionProperty(); ]
-    :   T_OPTION
-        param_list=option_param_list            { result.setParameterList($param_list.result); }
+    returns                                     [ Property result ]
+    :   T_OPTION                                { OptionProperty o = new OptionProperty(); }
+        param_list=option_param_list            { o.setParameterList($param_list.result); }
+                                                { result = o; }
     ;
 
 optional_option
-    returns                                     [ OptionalProperty result = new OptionalProperty(); ]
-    :   T_OPTIONAL
+    returns                                     [ Property result ]
+    :   T_OPTIONAL                              { OptionalProperty o = new OptionalProperty(); }
+                                                { result = o; }
+    ;
+
+depends
+    returns                                     [ Property result ]
+    :   T_DEPENDS_ON                            { DependsProperty o = new DependsProperty(); }
+        e=expr                                  { o.setExpression($e.result); }
+                                                { result = o; }
+    ;
+
+visible
+    returns                                     [ Property result ]
+    :   T_VISIBLE                               { VisibleProperty o = new VisibleProperty(); }
+        c=if_option_frag?                       { o.setCondition($c.result); }
+                                                { result = o; }
+    ;
+
+help
+    returns                                     [ Property result ]
+    :   T_HELP                                  { HelpProperty o = new HelpProperty(); }
+        V_HELP_TEXT                             { o.setText($V_HELP_TEXT.text); }
+                                                { result = o; }
     ;
 
 if_option_frag
     returns                                     [ Expression result ]
-    :   T_IF  V_EXPRESSION  expr                { result = $expr.result; }
-    ;
-
-depends
-    returns                                     [ DependsProperty result = new DependsProperty();  ]
-    :   T_DEPENDS_ON  expr                      { result.setExpression($expr.result); }
-    ;
-
-visible
-    returns                                     [ VisibleProperty result = new VisibleProperty(); ]
-    :   T_VISIBLE  if_option_frag?              { result.setCondition($if_option_frag.result); }
-    ;
-
-help
-    returns                                     [ HelpProperty result = new HelpProperty(); ]
-    :   T_HELP V_HELP_TEXT                      { result.setText($V_HELP_TEXT.text); }
+    :   V_IF_FRAG
+        e=expr                                  { result = $e.result; }
     ;
 
 option_param_list                               // TODO finish implementation
@@ -249,8 +282,14 @@ all_no_config_y_option_param
 
 expr
     returns                                     [ Expression result ]
+    :   V_EXPRESSION
+        e=or_expr                               { result = $e.result; }
+    ;
+
+or_expr
+    returns                                     [ Expression result ]
     :            left=and_expr                  { result = $left.result; }
-    (   T_OR     right=expr                     { result = ExpressionImpl.createOrExpression(       $result,      $right.result); }
+    (   T_OR     right=or_expr                  { result = ExpressionImpl.createOrExpression(       $result,      $right.result); }
     )?
     ;
 
@@ -278,8 +317,7 @@ not_expr
 list_expr
     returns                                     [ Expression result ]
     :                 left=symbol               { result = $left.result; }
-    |   T_OPEN_PAREN  right=expr  T_CLOSE_PAREN
-                                                { result = ExpressionImpl.createListExpression(     $right.result); }
+    |   T_OPEN_PAREN  right=expr  T_CLOSE_PAREN { result = ExpressionImpl.createListExpression(     $right.result); }
     ;
 
 symbol
