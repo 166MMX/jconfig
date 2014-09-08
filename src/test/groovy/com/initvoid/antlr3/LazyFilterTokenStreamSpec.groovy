@@ -21,7 +21,6 @@ class LazyFilterTokenStreamSpec extends LazyTokenStreamSpec
         when:
         tokenStream.consume()
         tokenStream.consume()
-        tokenStream.consume()
 
         then:
         tokenStream.LT(2) == token7
@@ -87,7 +86,6 @@ class LazyFilterTokenStreamSpec extends LazyTokenStreamSpec
     def 'LB k = -2'()
     {
         when:
-        tokenStream.consume()
         tokenStream.consume()
         tokenStream.consume()
 

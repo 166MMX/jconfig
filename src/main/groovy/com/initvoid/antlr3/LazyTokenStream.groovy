@@ -99,6 +99,7 @@ class LazyTokenStream implements TokenStream
     {
         if (marker < 0)
             throw new IllegalArgumentException('marker must be greater then 0')
+
         release(marker)
         seek(marker)
     }
