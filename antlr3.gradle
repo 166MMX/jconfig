@@ -9,48 +9,34 @@ dependencies {
     compile  'org.antlr:antlr-runtime:3.5.2'
 }
 
-task distributeGrammarSourceOutput << {
-    inputs.files.each { File source ->
-        copy {
-            from source
-            into outputs.files.filter {it.name == source.name}.singleFile.parent
-        }
-    }
-    delete inputs.files
-}
-
 task generateGrammarSource(type: JavaExec) {
     def targetLanguageLanguageName = 'java'
     def sourceSetName = 'main'
     def glob = '**/*.g'
     def debug = false
 
-    def inputTree = fileTree("$project.projectDir/src/$sourceSetName/antlr3")
-    def outputDir = file("$project.buildDir/generated-src/$sourceSetName/$targetLanguageLanguageName/")
+    def inputDir = file("$project.projectDir/src/$sourceSetName/antlr3")
+    def inputTree = fileTree(inputDir)
+    def outputDir = file("$project.buildDir/../generated/$sourceSetName/$targetLanguageLanguageName")
 
     inputTree.include glob
     mkdir(outputDir)
 
     inputs.files inputTree
     outputs.dir outputDir
-    finalizedBy distributeGrammarSourceOutput
 
+    workingDir = inputDir
     description = 'Generates Java sources from Antlr3 grammars.'
     main = 'org.antlr.Tool'
     classpath = configurations.antlr
-    args = ['-o', outputDir, inputTree.files].flatten()
+    args = ['-o', outputDir, inputTree.files.collect { File file ->
+        inputDir.toPath().relativize(file.toPath()).toFile()
+    }].flatten()
     if (debug)
     {
-        args = ['-debug', '-o', outputDir, inputTree.files].flatten()
-    }
-
-    inputTree.files.each { file ->
-        def grammarFile = inputTree.dir.toPath().relativize(file.toPath())
-        def grammarPrefix = grammarFile.fileName.toString()[0..-3]
-        ['Lexer.java', 'Parser.java', '.java', '.tokens'].each { suffix ->
-            distributeGrammarSourceOutput.inputs.file "$outputDir/$grammarPrefix$suffix"
-            distributeGrammarSourceOutput.outputs.file "$outputDir/$grammarFile.parent/$grammarPrefix$suffix"
-        }
+        args = ['-debug', '-o', outputDir, inputTree.files.collect { File file ->
+            inputDir.toPath().relativize(file.toPath()).toFile()
+        }].flatten()
     }
 }
 
@@ -60,37 +46,30 @@ task generateTestGrammarSource(type: JavaExec) {
     def glob = '**/*.g'
     def debug = false
 
-    def inputTree = fileTree("$project.projectDir/src/$sourceSetName/antlr3")
-    def outputDir = file("$project.buildDir/generated-src/$sourceSetName/$targetLanguageLanguageName/")
+    def inputDir = file("$project.projectDir/src/$sourceSetName/antlr3")
+    def inputTree = fileTree(inputDir)
+    def outputDir = file("$project.buildDir/../generated/$sourceSetName/$targetLanguageLanguageName")
 
     inputTree.include glob
     mkdir(outputDir)
 
     inputs.files inputTree
     outputs.dir outputDir
-    finalizedBy distributeGrammarSourceOutput
 
+    workingDir = inputDir
     description = 'Generates Java sources from Antlr3 grammars.'
     main = 'org.antlr.Tool'
     classpath = configurations.antlr
-    args = ['-o', outputDir, inputTree.files].flatten()
+    args = ['-o', outputDir, inputTree.files.collect { File file ->
+        inputDir.toPath().relativize(file.toPath()).toFile()
+    }].flatten()
     if (debug)
     {
-        args = ['-debug', '-o', outputDir, inputTree.files].flatten()
-    }
-
-    inputTree.files.each { file ->
-        def grammarFile = inputTree.dir.toPath().relativize(file.toPath())
-        def grammarPrefix = grammarFile.fileName.toString()[0..-3]
-        ['Lexer.java', 'Parser.java', '.java', '.tokens'].each { suffix ->
-            distributeGrammarSourceOutput.inputs.file "$outputDir/$grammarPrefix$suffix"
-            distributeGrammarSourceOutput.outputs.file "$outputDir/$grammarFile.parent/$grammarPrefix$suffix"
-        }
+        args = ['-debug', '-o', outputDir, inputTree.files.collect { File file ->
+            inputDir.toPath().relativize(file.toPath()).toFile()
+        }].flatten()
     }
 }
 
 sourceSets.main.java.srcDir  generateGrammarSource.outputs.files.singleFile
 sourceSets.test.java.srcDir  generateTestGrammarSource.outputs.files.singleFile
-
-compileJava.dependsOn        generateGrammarSource
-compileTestJava.dependsOn    generateTestGrammarSource
